@@ -1,0 +1,29 @@
+# .gitattributes
+# Normalize line endings: all text files use LF in the repo,
+# Windows checkouts use CRLF via autocrlf setting.
+
+* text=auto eol=lf
+
+# Shell scripts must always use LF (bash breaks on CRLF)
+*.sh text eol=lf
+
+# Windows batch files should use CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary files — no line-ending transformation
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.svg text eol=lf
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
+*.otf binary
+*.zip binary
+*.gz binary
+*.tar binary

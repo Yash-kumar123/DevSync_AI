@@ -1,0 +1,17 @@
+{
+  "version": "0.5.0",
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "bradlc.vscode-tailwindcss",
+    "ms-azuretools.vscode-docker",
+    "mikestead.dotenv",
+    "streetsidesoftware.code-spell-checker",
+    "eamodio.gitlens",
+    "github.vscode-pull-request-github",
+    "usernamehw.errorlens",
+    "ms-vscode.vscode-typescript-next",
+    "vitest.explorer",
+    "biomejs.biome"
+  ]
+}

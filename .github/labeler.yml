@@ -1,0 +1,55 @@
+# ---------------------------------------------------------------------------
+# GitHub Labeler — auto-labels PRs based on changed file paths
+# See: https://github.com/actions/labeler
+# ---------------------------------------------------------------------------
+
+"app: web":
+  - changed-files:
+      - any-glob-to-any-file: "apps/web/**"
+
+"app: gateway":
+  - changed-files:
+      - any-glob-to-any-file: "apps/gateway/**"
+
+"app: ai-service":
+  - changed-files:
+      - any-glob-to-any-file: "apps/ai-service/**"
+
+"pkg: shared-types":
+  - changed-files:
+      - any-glob-to-any-file: "packages/shared-types/**"
+
+"pkg: shared-config":
+  - changed-files:
+      - any-glob-to-any-file: "packages/shared-config/**"
+
+"pkg: shared-ui":
+  - changed-files:
+      - any-glob-to-any-file: "packages/shared-ui/**"
+
+"area: docker":
+  - changed-files:
+      - any-glob-to-any-file: "docker/**"
+      - any-glob-to-any-file: "docker-compose.yml"
+
+"area: ci/cd":
+  - changed-files:
+      - any-glob-to-any-file: ".github/**"
+
+"area: docs":
+  - changed-files:
+      - any-glob-to-any-file: "docs/**"
+      - any-glob-to-any-file: "*.md"
+
+"area: tooling":
+  - changed-files:
+      - any-glob-to-any-file: "scripts/**"
+      - any-glob-to-any-file: "package.json"
+      - any-glob-to-any-file: "turbo.json"
+      - any-glob-to-any-file: "tsconfig.base.json"
+      - any-glob-to-any-file: "commitlint.config.json"
+
+"dependencies":
+  - changed-files:
+      - any-glob-to-any-file: "**/package.json"
+      - any-glob-to-any-file: "package-lock.json"
