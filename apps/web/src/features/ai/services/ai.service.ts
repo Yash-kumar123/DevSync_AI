@@ -1,3 +1,4 @@
+import { getApiBaseUrl } from '@services/http';
 import type { AIChatMessage } from '../types/ai.types';
 
 export interface StreamCallbacks {
@@ -8,8 +9,7 @@ export interface StreamCallbacks {
 
 export class AIService {
   private getApiUrl(): string {
-    // Port 5000 is default ai-service port, or proxied via Vite /api
-    return '/api/ai/chat';
+    return `${getApiBaseUrl()}/ai/chat`;
   }
 
   async streamChat(

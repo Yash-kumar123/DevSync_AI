@@ -1,4 +1,4 @@
-import { http } from '@services/http';
+import { http, getApiBaseUrl } from '@services/http';
 import type { RAGStatus, RAGQueryResult } from '../types/rag.types';
 
 export interface RAGStreamCallbacks {
@@ -47,7 +47,7 @@ export class RAGService {
     abortSignal?: AbortSignal,
   ): Promise<void> {
     try {
-      const response = await fetch('/api/rag/query', {
+      const response = await fetch(`${getApiBaseUrl()}/rag/query`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

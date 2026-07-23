@@ -9,8 +9,17 @@ import type { User } from '@types';
 //   2. Response interceptor — handles 401s with silent token refresh + retry
 // =============================================================================
 
-/** Base URL for all API calls. Vite proxy rewrites /api → gateway in dev. */
-const BASE_URL = '/api';
+/** Base URL for all API calls. Uses VITE_GATEWAY_HTTP_URL or VITE_API_URL if configured, defaulting to /api for dev proxy. */
+export const getApiBaseUrl = (): string => {
+  const envUrl = import.meta.env.VITE_GATEWAY_HTTP_URL || import.meta.env.VITE_API_URL;
+  if (envUrl) {
+    const trimmed = envUrl.replace(/\/+$/, '');
+    return trimmed.endsWith('/api') ? trimmed : `${trimmed}/api`;
+  }
+  return '/api';
+};
+
+const BASE_URL = getApiBaseUrl();
 
 export const http: AxiosInstance = axios.create({
   baseURL: BASE_URL,

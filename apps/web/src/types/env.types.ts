@@ -13,8 +13,9 @@ declare global {
     readonly VITE_APP_VERSION: string;
 
     // API endpoints
-    readonly VITE_GATEWAY_HTTP_URL: string;
-    readonly VITE_GATEWAY_WS_URL: string;
+    readonly VITE_GATEWAY_HTTP_URL?: string;
+    readonly VITE_GATEWAY_WS_URL?: string;
+    readonly VITE_API_URL?: string;
 
     // Feature flags
     readonly VITE_ENABLE_DEVTOOLS: string;

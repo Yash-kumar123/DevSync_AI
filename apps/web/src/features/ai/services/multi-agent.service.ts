@@ -1,3 +1,4 @@
+import { getApiBaseUrl } from '@services/http';
 import type { MultiAgentStepPayload } from '../types/multi-agent.types';
 
 export interface MultiAgentStreamCallbacks {
@@ -15,7 +16,7 @@ export class MultiAgentService {
     abortSignal?: AbortSignal,
   ): Promise<void> {
     try {
-      const response = await fetch('/api/ai/multi-agent', {
+      const response = await fetch(`${getApiBaseUrl()}/ai/multi-agent`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
