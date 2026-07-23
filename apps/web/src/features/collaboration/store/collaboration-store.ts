@@ -35,6 +35,8 @@ interface CollaborationState {
   activities: ActivityLogDTO[];
   pendingInvitations: WorkspaceInvitationDTO[];
   typingUsers: Record<string, boolean>; // userId -> isTyping
+  speakingUsers: Record<string, boolean>; // userId / socketId -> isSpeaking
+  activeSpeakerUser: { displayName: string; avatarUrl?: string } | null;
   isLoadingMembers: boolean;
   isLoadingNotifications: boolean;
   isLoadingActivities: boolean;
@@ -61,6 +63,12 @@ interface CollaborationActions {
   addOnlineUser: (user: PresenceUser) => void;
   removeOnlineUser: (userId: string) => void;
   updateUserTyping: (userId: string, isTyping: boolean) => void;
+  updateUserSpeaking: (
+    socketId: string,
+    userId: string | undefined,
+    isSpeaking: boolean,
+    user?: unknown,
+  ) => void;
   setNotifications: (notifications: NotificationDTO[]) => void;
   addNotification: (notification: NotificationDTO) => void;
   markNotificationRead: (notificationId: string) => Promise<void>;
@@ -98,6 +106,8 @@ const initialState: CollaborationState = {
   activities: [],
   pendingInvitations: [],
   typingUsers: {},
+  speakingUsers: {},
+  activeSpeakerUser: null,
   isLoadingMembers: false,
   isLoadingNotifications: false,
   isLoadingActivities: false,
@@ -203,6 +213,47 @@ export const useCollaborationStore = create<CollaborationState & CollaborationAc
         onlineUsers: state.onlineUsers.map((u) => (u.userId === userId ? { ...u, isTyping } : u)),
         users: state.users.map((u) => (u.userId === userId ? { ...u, isTyping } : u)),
       })),
+
+    updateUserSpeaking: (
+      socketId: string,
+      userId: string | undefined,
+      isSpeaking: boolean,
+      user?: unknown,
+    ) =>
+      set((state) => {
+        const key = userId || socketId;
+        const newSpeaking: Record<string, boolean> = { ...state.speakingUsers, [key]: isSpeaking };
+        if (socketId) newSpeaking[socketId] = isSpeaking;
+
+        let speakerUser: { displayName: string; avatarUrl?: string } | null = null;
+        if (isSpeaking) {
+          if (user && typeof user === 'object' && 'displayName' in user) {
+            const u = user as { displayName: string; avatarUrl?: string };
+            speakerUser = {
+              displayName: u.displayName,
+              ...(u.avatarUrl ? { avatarUrl: u.avatarUrl } : {}),
+            };
+          } else {
+            const found = state.users.find(
+              (u) => u.socketId === socketId || (userId && u.userId === userId),
+            );
+            if (found) {
+              speakerUser = {
+                displayName: found.displayName,
+                ...(found.avatarUrl ? { avatarUrl: found.avatarUrl } : {}),
+              };
+            }
+          }
+        }
+
+        return {
+          speakingUsers: newSpeaking,
+          activeSpeakerUser: speakerUser,
+          users: state.users.map((u) =>
+            u.socketId === socketId || (userId && u.userId === userId) ? { ...u, isSpeaking } : u,
+          ),
+        };
+      }),
 
     setNotifications: (notifications) => set({ notifications }),
 

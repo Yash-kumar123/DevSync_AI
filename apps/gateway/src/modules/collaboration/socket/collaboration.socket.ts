@@ -183,6 +183,32 @@ export class CollaborationSocketHandler {
       },
     );
 
+    // ── Speaking Status Handler ─────────────────────────────────────────────
+    socket.on(
+      'speaking-status',
+      (payload: {
+        workspaceId?: string;
+        roomCode?: string;
+        isSpeaking: boolean;
+        user?: { id: string; displayName: string; username?: string; avatarUrl?: string };
+      }) => {
+        const roomKey = payload.workspaceId ? `workspace:${payload.workspaceId}` : payload.roomCode;
+        if (!roomKey) return;
+        socket.to(roomKey).emit('speaking-status', {
+          socketId: socket.id,
+          isSpeaking: payload.isSpeaking,
+          user: payload.user || { id: socket.id, displayName: 'Peer' },
+        });
+        if (payload.workspaceId) {
+          socket.to(payload.workspaceId).emit('speaking-status', {
+            socketId: socket.id,
+            isSpeaking: payload.isSpeaking,
+            user: payload.user || { id: socket.id, displayName: 'Peer' },
+          });
+        }
+      },
+    );
+
     // ── Socket Disconnect Handler ───────────────────────────────────────────
     socket.on('disconnect', () => {
       const { workspaceId, userId, remainingUsers } = this.presenceService.userLeft(socket.id);

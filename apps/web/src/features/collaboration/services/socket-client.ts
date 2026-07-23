@@ -240,6 +240,24 @@ export class SocketClientService {
         this.fileChangedCallbacks.forEach((cb) => cb(payload));
       },
     );
+
+    socket.on(
+      'speaking-status',
+      (payload: {
+        socketId: string;
+        isSpeaking: boolean;
+        user?: { id: string; displayName: string; username?: string; avatarUrl?: string };
+      }) => {
+        useCollaborationStore
+          .getState()
+          .updateUserSpeaking?.(
+            payload.socketId,
+            payload.user?.id,
+            payload.isSpeaking,
+            payload.user,
+          );
+      },
+    );
   }
 
   /** Join workspace real-time room. */
@@ -430,6 +448,22 @@ export class SocketClientService {
     return () => {
       this.fileChangedCallbacks = this.fileChangedCallbacks.filter((cb) => cb !== callback);
     };
+  }
+
+  /** Emit voice speaking status when user talks into microphone. */
+  emitSpeakingStatus(
+    roomOrWorkspaceId: string,
+    isSpeaking: boolean,
+    user?: { id: string; displayName: string; username?: string; avatarUrl?: string },
+  ): void {
+    if (this.socket && this.socket.connected) {
+      this.socket.emit('speaking-status', {
+        roomCode: roomOrWorkspaceId,
+        workspaceId: roomOrWorkspaceId,
+        isSpeaking,
+        user,
+      });
+    }
   }
 
   disconnect(): void {

@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useCollaborationStore } from '../store/collaboration-store';
 import { useAuthStore } from '../../../store/auth-store';
-import { FiUsers, FiX } from 'react-icons/fi';
+import { FiUsers, FiX, FiVolume2 } from 'react-icons/fi';
 
 export const OnlineUsersAvatars: React.FC = () => {
-  const { users, onlineUsers } = useCollaborationStore();
+  const { users, onlineUsers, speakingUsers } = useCollaborationStore();
   const currentUser = useAuthStore((state) => state.user);
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -32,6 +32,7 @@ export const OnlineUsersAvatars: React.FC = () => {
       color: u.color,
       isOnline: true,
       isTyping: u.isTyping,
+      isSpeaking: false,
     })),
   ];
 
@@ -54,6 +55,7 @@ export const OnlineUsersAvatars: React.FC = () => {
       color: '#6366f1',
       isOnline: true,
       isTyping: false,
+      isSpeaking: false,
     });
   }
 
@@ -81,11 +83,19 @@ export const OnlineUsersAvatars: React.FC = () => {
               .toUpperCase()
               .slice(0, 2);
 
+            const isSpeaking = Boolean(
+              (user as { isSpeaking?: boolean }).isSpeaking ||
+              (user.userId && speakingUsers[user.userId]) ||
+              (user.socketId && speakingUsers[user.socketId]),
+            );
+
             return (
               <div
                 key={user.socketId || user.userId || idx}
-                style={{ borderColor: user.color || '#6366f1' }}
-                className="h-5 w-5 sm:h-6 sm:w-6 rounded-full bg-slate-900 border flex items-center justify-center text-[9px] font-bold text-white shadow-sm ring-1 ring-slate-950"
+                style={{ borderColor: isSpeaking ? '#10b981' : user.color || '#6366f1' }}
+                className={`relative h-5 w-5 sm:h-6 sm:w-6 rounded-full bg-slate-900 border flex items-center justify-center text-[9px] font-bold text-white shadow-sm ring-1 ring-slate-950 transition-all ${
+                  isSpeaking ? 'ring-2 ring-emerald-400 animate-pulse scale-105 z-10' : ''
+                }`}
               >
                 {user.avatarUrl ? (
                   <img
@@ -95,6 +105,11 @@ export const OnlineUsersAvatars: React.FC = () => {
                   />
                 ) : (
                   <span>{initials}</span>
+                )}
+                {isSpeaking && (
+                  <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-emerald-500 border border-slate-950 flex items-center justify-center text-[7px] text-white">
+                    <FiVolume2 className="h-2 w-2 animate-ping" />
+                  </span>
                 )}
               </div>
             );
@@ -137,15 +152,27 @@ export const OnlineUsersAvatars: React.FC = () => {
                 .toUpperCase()
                 .slice(0, 2);
 
+              const isSpeaking = Boolean(
+                (user as { isSpeaking?: boolean }).isSpeaking ||
+                (user.userId && speakingUsers[user.userId]) ||
+                (user.socketId && speakingUsers[user.socketId]),
+              );
+
               return (
                 <div
                   key={user.socketId || user.userId || idx}
-                  className="flex items-center justify-between p-2 rounded-lg bg-slate-800/60 hover:bg-slate-800 border border-slate-700/40 transition-colors"
+                  className={`flex items-center justify-between p-2 rounded-lg border transition-colors ${
+                    isSpeaking
+                      ? 'bg-emerald-950/40 border-emerald-500/50 shadow-glow-sm'
+                      : 'bg-slate-800/60 hover:bg-slate-800 border-slate-700/40'
+                  }`}
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
                     <div
-                      style={{ borderColor: user.color || '#6366f1' }}
-                      className="relative h-7 w-7 rounded-full bg-slate-900 border-2 shrink-0 flex items-center justify-center text-[10px] font-bold text-white shadow-sm"
+                      style={{ borderColor: isSpeaking ? '#10b981' : user.color || '#6366f1' }}
+                      className={`relative h-7 w-7 rounded-full bg-slate-900 border-2 shrink-0 flex items-center justify-center text-[10px] font-bold text-white shadow-sm ${
+                        isSpeaking ? 'ring-2 ring-emerald-400 animate-pulse' : ''
+                      }`}
                     >
                       {user.avatarUrl ? (
                         <img
@@ -156,7 +183,11 @@ export const OnlineUsersAvatars: React.FC = () => {
                       ) : (
                         <span>{initials}</span>
                       )}
-                      <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-emerald-500 border border-slate-900" />
+                      <span
+                        className={`absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full border border-slate-900 ${
+                          isSpeaking ? 'bg-emerald-400 animate-ping' : 'bg-emerald-500'
+                        }`}
+                      />
                     </div>
 
                     <div className="flex flex-col min-w-0">
@@ -177,7 +208,13 @@ export const OnlineUsersAvatars: React.FC = () => {
                   </div>
 
                   <div className="flex items-center gap-1 shrink-0">
-                    {user.isTyping && (
+                    {isSpeaking && (
+                      <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-500/20 px-1.5 py-0.5 rounded border border-emerald-500/40 animate-pulse">
+                        <FiVolume2 className="h-3 w-3 text-emerald-400 animate-pulse" />
+                        <span>Speaking</span>
+                      </span>
+                    )}
+                    {user.isTyping && !isSpeaking && (
                       <span className="text-[10px] text-amber-400 animate-pulse font-mono">
                         typing...
                       </span>

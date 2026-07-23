@@ -109,41 +109,6 @@ export class CollaborationController {
       }
     });
 
-    // ── chat-message (Live Workspace Communication) ──────────────────────────
-    socket.on(
-      'chat-message',
-      (payload: {
-        roomCode?: string;
-        workspaceId?: string;
-        message: string;
-        user?: { id: string; displayName: string; username?: string; avatarUrl?: string };
-      }) => {
-        const room = payload.roomCode || payload.workspaceId;
-        if (!room || !payload.message?.trim()) return;
-
-        const chatPayload = {
-          id: `msg-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          roomCode: room,
-          workspaceId: room,
-          message: payload.message.trim(),
-          user: payload.user || { id: socket.id, displayName: 'Developer', username: 'peer' },
-          timestamp: new Date().toISOString(),
-        };
-
-        io.to(room).emit('chat-message', chatPayload);
-      },
-    );
-
-    // ── file-changed (Automatic Real-time Sync across peers) ──────────────────
-    socket.on(
-      'file-changed',
-      (payload: { roomCode?: string; workspaceId?: string; action: string; fileName?: string }) => {
-        const room = payload.roomCode || payload.workspaceId;
-        if (!room) return;
-        socket.to(room).emit('file-changed', payload);
-      },
-    );
-
     // ── disconnect ───────────────────────────────────────────────────────────
     socket.on('disconnect', () => {
       const { roomCode, removedUser, remainingUsers } = this.service.leaveRoom(socket.id);

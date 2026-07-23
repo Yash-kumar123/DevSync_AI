@@ -17,11 +17,13 @@ import {
   FiX,
   FiCopy,
   FiCheck,
+  FiVolume2,
 } from 'react-icons/fi';
 import { useAuth } from '@hooks/useAuth';
 import { useIDEStore } from '../store/ide-store';
 import { useTerminalStore } from '../../terminal/store/terminal-store';
 import { useFileSystemStore } from '../../filesystem/store/filesystem-store';
+import { useCollaborationStore } from '../../collaboration/store/collaboration-store';
 import { socketClient } from '../../collaboration/services/socket-client';
 import { OnlineUsersAvatars } from '../../collaboration/components/OnlineUsersAvatars';
 import { ConnectionStatusBadge } from '../../collaboration/components/ConnectionStatusBadge';
@@ -78,12 +80,68 @@ export const IDETopNav: React.FC<IDETopNavProps> = ({ roomCode = 'DEMO-ROOM' }) 
         setMediaStream(null);
       }
       setIsVoiceConnected(false);
+      if (user) {
+        socketClient.emitSpeakingStatus(roomCode, false, {
+          id: user.id,
+          displayName: user.displayName,
+          username: user.username,
+          ...(user.avatarUrl ? { avatarUrl: user.avatarUrl } : {}),
+        });
+      }
       toast('Voice channel disconnected', { icon: '🔇' });
     } else {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         setMediaStream(stream);
         setIsVoiceConnected(true);
+
+        if (user) {
+          socketClient.emitSpeakingStatus(roomCode, true, {
+            id: user.id,
+            displayName: user.displayName,
+            username: user.username,
+            ...(user.avatarUrl ? { avatarUrl: user.avatarUrl } : {}),
+          });
+        }
+
+        // Web Audio API real-time microphone volume detection
+        try {
+          const audioContext = new (
+            window.AudioContext ||
+            (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+          )();
+          const source = audioContext.createMediaStreamSource(stream);
+          const analyser = audioContext.createAnalyser();
+          analyser.fftSize = 256;
+          source.connect(analyser);
+
+          const dataArray = new Uint8Array(analyser.frequencyBinCount);
+          let wasSpeaking = false;
+
+          const detectSpeech = () => {
+            if (!stream.active) return;
+            analyser.getByteFrequencyData(dataArray);
+            const avgVolume = dataArray.reduce((acc, val) => acc + val, 0) / dataArray.length;
+            const isSpeakingNow = avgVolume > 12;
+
+            if (isSpeakingNow !== wasSpeaking) {
+              wasSpeaking = isSpeakingNow;
+              if (user) {
+                socketClient.emitSpeakingStatus(roomCode, isSpeakingNow, {
+                  id: user.id,
+                  displayName: user.displayName,
+                  username: user.username,
+                  ...(user.avatarUrl ? { avatarUrl: user.avatarUrl } : {}),
+                });
+              }
+            }
+            if (stream.active) requestAnimationFrame(detectSpeech);
+          };
+          detectSpeech();
+        } catch {
+          // Fallback if AudioContext is blocked by browser policy
+        }
+
         toast.success('Connected to Voice Channel! Live mic active.', { icon: '🎙️' });
       } catch {
         toast.error('Could not access microphone for Voice Channel.');
@@ -149,6 +207,7 @@ export const IDETopNav: React.FC<IDETopNavProps> = ({ roomCode = 'DEMO-ROOM' }) 
     });
   };
 
+  const activeSpeakerUser = useCollaborationStore((state) => state.activeSpeakerUser);
   const isDark = editorSettings.theme === 'vs-dark';
 
   const handleThemeToggle = () => {
@@ -215,8 +274,17 @@ export const IDETopNav: React.FC<IDETopNavProps> = ({ roomCode = 'DEMO-ROOM' }) 
         </div>
       </div>
 
-      {/* Center section: Online Users Avatars & Connection Status (Visible on all screens) */}
+      {/* Center section: Online Users Avatars & Connection Status */}
       <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        {/* Floating Active Speaker Pop Banner */}
+        {activeSpeakerUser && (
+          <div className="flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/50 text-emerald-300 text-xs font-semibold shadow-glow-sm animate-bounce">
+            <FiVolume2 className="h-3.5 w-3.5 text-emerald-400 animate-pulse" />
+            <span className="truncate max-w-[140px]">
+              {activeSpeakerUser.displayName} is speaking...
+            </span>
+          </div>
+        )}
         <OnlineUsersAvatars />
         <div className="hidden sm:block">
           <ConnectionStatusBadge />
