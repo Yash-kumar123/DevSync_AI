@@ -4,7 +4,7 @@ import { useAuthStore } from '../../../store/auth-store';
 import { FiUsers, FiX } from 'react-icons/fi';
 
 export const OnlineUsersAvatars: React.FC = () => {
-  const { users } = useCollaborationStore();
+  const { users, onlineUsers } = useCollaborationStore();
   const currentUser = useAuthStore((state) => state.user);
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -20,24 +20,42 @@ export const OnlineUsersAvatars: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Merge users list with fallback to current user if offline array empty
-  const activeUserList =
-    users.length > 0
-      ? users
-      : currentUser
-        ? [
-            {
-              socketId: 'current-user-socket',
-              userId: currentUser.id,
-              username: currentUser.username,
-              displayName: currentUser.displayName,
-              avatarUrl: currentUser.avatarUrl,
-              color: '#6366f1',
-              isOnline: true,
-              isTyping: false,
-            },
-          ]
-        : [];
+  // Combine both users and onlineUsers arrays, deduplicated by userId or socketId
+  const combinedList = [
+    ...users,
+    ...onlineUsers.map((u) => ({
+      socketId: u.socketId,
+      userId: u.userId,
+      username: u.username,
+      displayName: u.displayName,
+      avatarUrl: u.avatarUrl,
+      color: u.color,
+      isOnline: true,
+      isTyping: u.isTyping,
+    })),
+  ];
+
+  const uniqueUserMap = new Map<string, (typeof combinedList)[0]>();
+  combinedList.forEach((u) => {
+    const key = u.userId || u.socketId || u.username || u.displayName;
+    if (key && !uniqueUserMap.has(key)) {
+      uniqueUserMap.set(key, u);
+    }
+  });
+
+  const activeUserList = Array.from(uniqueUserMap.values());
+  if (activeUserList.length === 0 && currentUser) {
+    activeUserList.push({
+      socketId: 'current-user-socket',
+      userId: currentUser.id,
+      username: currentUser.username,
+      displayName: currentUser.displayName,
+      avatarUrl: currentUser.avatarUrl,
+      color: '#6366f1',
+      isOnline: true,
+      isTyping: false,
+    });
+  }
 
   const count = activeUserList.length;
 

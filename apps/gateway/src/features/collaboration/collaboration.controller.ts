@@ -32,10 +32,12 @@ export class CollaborationController {
     socket.on('join-room', (payload: JoinRoomPayload, callback?: (res: unknown) => void) => {
       try {
         const { user } = this.service.joinRoom(socket.id, payload);
-        socket.join(payload.roomCode);
+        const code = payload.roomCode;
+        socket.join(code);
+        socket.join(`workspace:${code}`);
 
-        const roomUsers = this.service.getRoomUsers(payload.roomCode);
-        const latestYjsState = this.service.getYjsState(payload.roomCode);
+        const roomUsers = this.service.getRoomUsers(code);
+        const latestYjsState = this.service.getYjsState(code);
 
         // Notify caller with current room users & Yjs state update vector
         if (callback) {
@@ -47,9 +49,11 @@ export class CollaborationController {
           });
         }
 
-        // Broadcast to other users in the room
-        socket.to(payload.roomCode).emit('user-joined', { user, users: roomUsers });
-        io.to(payload.roomCode).emit('room-users', { users: roomUsers });
+        // Broadcast to other users in the room across both room name aliases
+        socket.to(code).emit('user-joined', { user, users: roomUsers });
+        socket.to(`workspace:${code}`).emit('user-joined', { user, users: roomUsers });
+        io.to(code).emit('room-users', { users: roomUsers });
+        io.to(`workspace:${code}`).emit('room-users', { users: roomUsers });
       } catch {
         if (callback) callback({ success: false, message: 'Failed to join room.' });
       }
@@ -57,11 +61,17 @@ export class CollaborationController {
 
     // ── leave-room ───────────────────────────────────────────────────────────
     socket.on('leave-room', (payload: LeaveRoomPayload) => {
-      socket.leave(payload.roomCode);
+      const code = payload.roomCode;
+      socket.leave(code);
+      socket.leave(`workspace:${code}`);
       const { removedUser, remainingUsers } = this.service.leaveRoom(socket.id);
       if (removedUser) {
-        socket.to(payload.roomCode).emit('user-left', { socketId: socket.id, user: removedUser });
-        io.to(payload.roomCode).emit('room-users', { users: remainingUsers });
+        socket.to(code).emit('user-left', { socketId: socket.id, user: removedUser });
+        socket
+          .to(`workspace:${code}`)
+          .emit('user-left', { socketId: socket.id, user: removedUser });
+        io.to(code).emit('room-users', { users: remainingUsers });
+        io.to(`workspace:${code}`).emit('room-users', { users: remainingUsers });
       }
     });
 

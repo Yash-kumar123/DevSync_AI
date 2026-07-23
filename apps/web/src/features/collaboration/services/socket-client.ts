@@ -181,28 +181,32 @@ export class SocketClientService {
       }
     });
 
-    // Legacy / Editor sync events
+    // ── room-users / user-joined sync ─────────────────────────────────────
+    socket.on('room-users', (payload: { users: CollaborationUser[] }) => {
+      if (payload?.users && payload.users.length > 0) {
+        useCollaborationStore.getState().setUsers(payload.users);
+      }
+    });
+
     socket.on('user-joined', (payload: { user: CollaborationUser; users: CollaborationUser[] }) => {
-      if (payload.users) {
-        useCollaborationStore.getState().setOnlineUsers?.(
-          payload.users.map((u) => ({
-            socketId: u.socketId,
-            userId: u.userId,
-            username: u.username,
-            displayName: u.displayName,
-            avatarUrl: u.avatarUrl,
-            role: 'EDITOR' as WorkspaceRole,
-            color: u.color,
-            isOnline: true,
-            lastActive: new Date().toISOString(),
-            isTyping: u.isTyping,
-          })),
-        );
+      if (payload?.users && payload.users.length > 0) {
+        useCollaborationStore.getState().setUsers(payload.users);
+      } else if (payload?.user) {
+        useCollaborationStore.getState().addUser(payload.user);
+      }
+      if (payload?.user?.displayName) {
+        toast.success(`${payload.user.displayName} joined the room`, {
+          icon: '🟢',
+          duration: 3000,
+        });
       }
     });
 
     socket.on('user-left', (payload: { socketId: string; user?: CollaborationUser }) => {
-      if (payload.user?.userId) {
+      if (payload?.socketId) {
+        useCollaborationStore.getState().removeUser(payload.socketId);
+      }
+      if (payload?.user?.userId) {
         useCollaborationStore.getState().removeOnlineUser(payload.user.userId);
       }
     });
@@ -320,6 +324,10 @@ export class SocketClientService {
       socket.emit('join-room', { roomCode, user }, (response: JoinRoomResponse) => {
         if (response?.success) {
           useCollaborationStore.getState().setConnectionStatus('connected');
+          useCollaborationStore.getState().setRoom(roomCode);
+          if (response.users && response.users.length > 0) {
+            useCollaborationStore.getState().setUsers(response.users);
+          }
         }
         resolve(response || { success: false, message: 'No response from server.' });
       });

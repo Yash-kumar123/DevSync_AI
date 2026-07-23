@@ -58,6 +58,7 @@ export class CollaborationSocketHandler {
           const userKey = `user:${user.id}`;
 
           socket.join(roomKey);
+          socket.join(workspaceId);
           socket.join(userKey);
 
           // Add to Presence Service
@@ -68,13 +69,18 @@ export class CollaborationSocketHandler {
 
           const onlineUsers = this.presenceService.getOnlineUsers(workspaceId);
 
-          // 1. Emit `user-online` event to all peers in workspace
+          // 1. Emit `user-online`, `room-users`, and `user-joined` events to all room peers
           const userOnlineData: UserOnlinePayload = {
             workspaceId,
             user: presenceUser,
             onlineUsers,
           };
           io.to(roomKey).emit('user-online', userOnlineData);
+          io.to(workspaceId).emit('user-online', userOnlineData);
+          io.to(roomKey).emit('room-users', { users: onlineUsers });
+          io.to(workspaceId).emit('room-users', { users: onlineUsers });
+          io.to(roomKey).emit('user-joined', { user: presenceUser, users: onlineUsers });
+          io.to(workspaceId).emit('user-joined', { user: presenceUser, users: onlineUsers });
 
           // Log join activity
           const activity = await this.activityService.logActivity(
