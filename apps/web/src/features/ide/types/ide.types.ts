@@ -12,7 +12,7 @@ export interface FileNode {
   content?: string;
 }
 
-export type RightPanelTab = 'ai' | 'collaboration' | 'git' | 'terminal';
+export type RightPanelTab = 'ai' | 'collaboration' | 'git' | 'terminal' | 'snippets';
 
 export interface EditorSettings {
   theme: 'vs-dark' | 'light';

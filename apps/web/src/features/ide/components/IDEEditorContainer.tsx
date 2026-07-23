@@ -10,7 +10,7 @@ import { socketClient } from '../../collaboration/services/socket-client';
 import { YjsProviderService } from '../../collaboration/services/yjs-provider';
 import { remoteCursorsManager } from '../../collaboration/components/RemoteCursorsManager';
 import { IDEEditorTabs } from './IDEEditorTabs';
-import { FiCode } from 'react-icons/fi';
+import { FiCode, FiEye } from 'react-icons/fi';
 
 /** Map file extension to Monaco Editor language string. */
 function getMonacoLanguage(filename: string | null): string {
@@ -35,7 +35,7 @@ export const IDEEditorContainer: React.FC = () => {
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const yjsProviderRef = useRef<YjsProviderService | null>(null);
 
-  const { editorSettings, setCursorPosition } = useIDEStore();
+  const { editorSettings, setCursorPosition, isPreviewOpen, togglePreview } = useIDEStore();
   const { openFiles, activeFileId, updateFileContentLocally } = useFileSystemStore();
   const { users } = useCollaborationStore();
 
@@ -136,34 +136,72 @@ export const IDEEditorContainer: React.FC = () => {
 
       {/* Editor Content Area */}
       {currentFile ? (
-        <div className="flex-1 relative">
-          <Editor
-            height="100%"
-            path={currentFile.id} // Ensures Monaco maintains model caching per path/id
-            language={language}
-            theme={editorSettings.theme}
-            value={currentFile.content}
-            onChange={handleEditorChange}
-            onMount={handleEditorMount}
-            options={{
-              automaticLayout: true,
-              fontSize: editorSettings.fontSize,
-              fontFamily: "'Fira Code', 'Cascadia Code', Consolas, Monaco, monospace",
-              minimap: { enabled: editorSettings.minimap },
-              wordWrap: editorSettings.wordWrap,
-              readOnly: editorSettings.readOnly,
-              lineNumbers: editorSettings.lineNumbers,
-              scrollBeyondLastLine: false,
-              padding: { top: 12, bottom: 12 },
-              tabSize: 2,
-              smoothScrolling: true,
-              cursorBlinking: 'smooth',
-              cursorSmoothCaretAnimation: 'on',
-              renderLineHighlight: 'all',
-              inlineSuggest: { enabled: true },
-              suggestOnTriggerCharacters: true,
-            }}
-          />
+        <div className="flex-1 flex flex-col md:flex-row relative overflow-hidden">
+          <div
+            className={`${isPreviewOpen ? 'w-full md:w-1/2 h-1/2 md:h-full border-b md:border-b-0 md:border-r border-slate-800' : 'w-full h-full'} relative`}
+          >
+            <Editor
+              height="100%"
+              path={currentFile.id} // Ensures Monaco maintains model caching per path/id
+              language={language}
+              theme={editorSettings.theme}
+              value={currentFile.content}
+              onChange={handleEditorChange}
+              onMount={handleEditorMount}
+              options={{
+                automaticLayout: true,
+                fontSize: editorSettings.fontSize,
+                fontFamily: "'Fira Code', 'Cascadia Code', Consolas, Monaco, monospace",
+                minimap: { enabled: editorSettings.minimap },
+                wordWrap: editorSettings.wordWrap,
+                readOnly: editorSettings.readOnly,
+                lineNumbers: editorSettings.lineNumbers,
+                scrollBeyondLastLine: false,
+                padding: { top: 12, bottom: 12 },
+                tabSize: 2,
+                smoothScrolling: true,
+                cursorBlinking: 'smooth',
+                cursorSmoothCaretAnimation: 'on',
+                renderLineHighlight: 'all',
+                inlineSuggest: { enabled: true },
+                suggestOnTriggerCharacters: true,
+              }}
+            />
+          </div>
+
+          {/* Split-Screen Live Web App Sandbox Preview Panel */}
+          {isPreviewOpen && (
+            <div className="w-full md:w-1/2 h-1/2 md:h-full bg-slate-900 flex flex-col overflow-hidden animate-in fade-in duration-150">
+              <div className="h-8 px-3 bg-slate-950 border-b border-slate-800 flex items-center justify-between text-xs text-slate-300 select-none shrink-0">
+                <div className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="font-bold text-slate-200 flex items-center gap-1.5">
+                    <FiEye className="h-3.5 w-3.5 text-emerald-400" />
+                    <span>Live Web App Sandbox Preview</span>
+                  </span>
+                </div>
+                <button
+                  onClick={togglePreview}
+                  className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                  title="Close Preview"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="flex-1 w-full h-full bg-white relative">
+                <iframe
+                  srcDoc={
+                    currentFile.content.includes('<html') || currentFile.content.includes('<div')
+                      ? currentFile.content
+                      : `<!DOCTYPE html><html><head><style>body { font-family: system-ui, sans-serif; padding: 2rem; background: #0f172a; color: #f8fafc; }</style></head><body><h2>DevSync AI Live Web Preview</h2><p>Viewing output for <code>${currentFile.fileName}</code></p><pre style="background: #1e293b; padding: 1rem; border-radius: 8px; color: #38bdf8;">${currentFile.content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre></body></html>`
+                  }
+                  title="Live Web Preview Sandbox"
+                  className="w-full h-full border-none bg-white"
+                  sandbox="allow-scripts allow-modals"
+                />
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         /* Empty State when no tabs are open */

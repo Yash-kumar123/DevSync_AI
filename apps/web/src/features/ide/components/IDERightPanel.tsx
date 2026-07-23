@@ -1,10 +1,11 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { FiCpu, FiUsers, FiGitBranch, FiTerminal, FiX, FiLock } from 'react-icons/fi';
+import { FiCpu, FiUsers, FiGitBranch, FiTerminal, FiX, FiLock, FiBookmark } from 'react-icons/fi';
 import { useIDEStore } from '../store/ide-store';
 import type { RightPanelTab } from '../types/ide.types';
 import { CollaborationPanelContent } from '../../collaboration/components/CollaborationPanelContent';
 import { AIChatPanel } from '../../ai/components/AIChatPanel';
 import { GitSourceControlPanel } from '../../git/components/GitSourceControlPanel';
+import { SnippetLibraryPanel } from './SnippetLibraryPanel';
 
 export const IDERightPanel: React.FC = () => {
   const { rightPanelOpen, toggleRightPanel, activeRightTab, setActiveRightTab } = useIDEStore();
@@ -43,6 +44,7 @@ export const IDERightPanel: React.FC = () => {
     { id: 'ai', label: 'AI Assistant', icon: <FiCpu className="h-4 w-4" /> },
     { id: 'collaboration', label: 'Collaboration', icon: <FiUsers className="h-4 w-4" /> },
     { id: 'git', label: 'Git Control', icon: <FiGitBranch className="h-4 w-4" /> },
+    { id: 'snippets', label: 'Code Snippets', icon: <FiBookmark className="h-4 w-4" /> },
     { id: 'terminal', label: 'Terminal', icon: <FiTerminal className="h-4 w-4" /> },
   ];
 
@@ -91,6 +93,8 @@ export const IDERightPanel: React.FC = () => {
               <CollaborationPanelContent />
             ) : activeRightTab === 'git' ? (
               <GitSourceControlPanel />
+            ) : activeRightTab === 'snippets' ? (
+              <SnippetLibraryPanel />
             ) : (
               <div className="flex-1 p-5 flex flex-col justify-center items-center text-center">
                 {activeRightTab === 'terminal' && (

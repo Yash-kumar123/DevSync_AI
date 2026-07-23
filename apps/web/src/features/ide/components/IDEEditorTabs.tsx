@@ -1,5 +1,5 @@
 import React from 'react';
-import { FiX } from 'react-icons/fi';
+import { FiX, FiEye } from 'react-icons/fi';
 import { useFileSystemStore } from '../../filesystem/store/filesystem-store';
 import { getFileIcon } from '../../filesystem/utils/file-icons';
 import { useIDEStore } from '../store/ide-store';
@@ -12,6 +12,8 @@ export const IDEEditorTabs: React.FC = () => {
     activeFileId: legacyActiveId,
     setActiveFile: setLegacyActive,
     closeFile: closeLegacy,
+    isPreviewOpen,
+    togglePreview,
   } = useIDEStore();
 
   // Prefer dynamic filesystem store tabs if open, else fallback to static IDE store tabs
@@ -63,6 +65,21 @@ export const IDEEditorTabs: React.FC = () => {
             </div>
           );
         })}
+
+        <button
+          onClick={togglePreview}
+          className={`ml-auto mr-2 flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold border transition-all ${
+            isPreviewOpen
+              ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40 shadow-glow-sm'
+              : 'bg-slate-900 hover:bg-slate-800 text-slate-400 border-slate-700'
+          }`}
+          title="Toggle Split-Screen Live Web App Sandbox Preview"
+        >
+          <FiEye className="h-3.5 w-3.5" />
+          <span className="hidden sm:inline">
+            {isPreviewOpen ? 'Preview Active' : 'Live Preview'}
+          </span>
+        </button>
       </div>
     );
   }

@@ -18,6 +18,8 @@ import {
   FiCopy,
   FiCheck,
   FiVolume2,
+  FiVideo,
+  FiVideoOff,
 } from 'react-icons/fi';
 import { useAuth } from '@hooks/useAuth';
 import { useIDEStore } from '../store/ide-store';
@@ -47,6 +49,33 @@ export const IDETopNav: React.FC<IDETopNavProps> = ({ roomCode = 'DEMO-ROOM' }) 
   const [hasCopiedLink, setHasCopiedLink] = useState(false);
   const [isVoiceConnected, setIsVoiceConnected] = useState(false);
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
+
+  const [isVideoConnected, setIsVideoConnected] = useState(false);
+  const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
+  const videoRef = React.useRef<HTMLVideoElement | null>(null);
+
+  const handleToggleVideoChannel = async () => {
+    if (isVideoConnected) {
+      if (videoStream) {
+        videoStream.getTracks().forEach((t) => t.stop());
+        setVideoStream(null);
+      }
+      setIsVideoConnected(false);
+      toast('Video call disconnected', { icon: '📹' });
+    } else {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        setVideoStream(stream);
+        setIsVideoConnected(true);
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+        toast.success('Connected to Live WebRTC Video Call!', { icon: '🎥' });
+      } catch {
+        toast.error('Could not access webcam camera for video call.');
+      }
+    }
+  };
 
   const inviteUrl = `${window.location.origin}/workspace/${roomCode}`;
 
@@ -304,6 +333,25 @@ export const IDETopNav: React.FC<IDETopNavProps> = ({ roomCode = 'DEMO-ROOM' }) 
           <span className="hidden md:inline">Invite</span>
         </button>
 
+        {/* Video Channel Toggle */}
+        <button
+          onClick={() => void handleToggleVideoChannel()}
+          className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-md text-xs font-medium border transition-all ${
+            isVideoConnected
+              ? 'bg-purple-500/20 text-purple-300 border-purple-500/40 animate-pulse'
+              : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700'
+          }`}
+          title={isVideoConnected ? 'Disconnect Video Call' : 'Start WebRTC Video Call'}
+          id="ide-video-btn"
+        >
+          {isVideoConnected ? (
+            <FiVideo className="h-3.5 w-3.5 text-purple-400" />
+          ) : (
+            <FiVideoOff className="h-3.5 w-3.5 text-slate-400" />
+          )}
+          <span className="hidden lg:inline">{isVideoConnected ? 'Video On' : 'Video'}</span>
+        </button>
+
         {/* Voice Channel Toggle */}
         <button
           onClick={() => void handleToggleVoiceChannel()}
@@ -555,6 +603,31 @@ export const IDETopNav: React.FC<IDETopNavProps> = ({ roomCode = 'DEMO-ROOM' }) 
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Floating Picture-in-Picture WebRTC Video Call Webcam Preview */}
+      {isVideoConnected && (
+        <div className="fixed bottom-12 right-14 w-48 h-36 bg-slate-950 border-2 border-purple-500 rounded-2xl shadow-2xl overflow-hidden z-50 flex flex-col group animate-in fade-in duration-200">
+          <div className="h-6 px-2 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between text-[10px] font-bold text-purple-300">
+            <span className="flex items-center gap-1">
+              <FiVideo className="h-3 w-3 text-purple-400 animate-pulse" />
+              <span>WebRTC Camera</span>
+            </span>
+            <button
+              onClick={() => void handleToggleVideoChannel()}
+              className="text-slate-400 hover:text-white"
+            >
+              ✕
+            </button>
+          </div>
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            className="w-full h-full object-cover bg-black"
+          />
         </div>
       )}
     </header>

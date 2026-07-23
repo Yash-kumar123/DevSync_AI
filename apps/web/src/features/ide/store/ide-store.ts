@@ -16,6 +16,7 @@ interface IDEState {
   expandedFolderIds: Set<string>;
   leftSidebarOpen: boolean;
   rightPanelOpen: boolean;
+  isPreviewOpen: boolean;
   activeRightTab: RightPanelTab;
   editorSettings: EditorSettings;
   cursorPosition: CursorPosition;
@@ -29,6 +30,7 @@ interface IDEActions {
   updateFileContent: (fileId: string, content: string) => void;
   toggleLeftSidebar: () => void;
   toggleRightPanel: () => void;
+  togglePreview: () => void;
   setActiveRightTab: (tab: RightPanelTab) => void;
   updateEditorSettings: (settings: Partial<EditorSettings>) => void;
   setCursorPosition: (line: number, column: number) => void;
@@ -44,6 +46,7 @@ const initialState: IDEState = {
   expandedFolderIds: new Set(['src', 'src/components', 'src/pages']),
   leftSidebarOpen: true,
   rightPanelOpen: false,
+  isPreviewOpen: false,
   activeRightTab: 'ai',
   editorSettings: {
     theme: 'vs-dark',
@@ -118,6 +121,8 @@ export const useIDEStore = create<IDEState & IDEActions>((set) => ({
   toggleLeftSidebar: () => set((state) => ({ leftSidebarOpen: !state.leftSidebarOpen })),
 
   toggleRightPanel: () => set((state) => ({ rightPanelOpen: !state.rightPanelOpen })),
+
+  togglePreview: () => set((state) => ({ isPreviewOpen: !state.isPreviewOpen })),
 
   setActiveRightTab: (tab: RightPanelTab) =>
     set((state) => ({
