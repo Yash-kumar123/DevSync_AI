@@ -3,7 +3,7 @@
   "ui": "tui",
   "tasks": {
     "build": {
-      "dependsOn": ["^lint"],
+      "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": [".next/**", "!.next/cache/**", "dist/**", "build/**"]
     },
@@ -12,11 +12,9 @@
       "persistent": true
     },
     "lint": {
-      "dependsOn": ["^lint:fix"],
       "outputs": []
     },
     "lint:fix": {
-      "dependsOn": ["^typecheck"],
       "outputs": [],
       "cache": false
     },
@@ -51,6 +49,14 @@
       "cache": false
     }
   },
-  "globalEnv": ["NODE_ENV", "CI", "TURBO_TOKEN", "TURBO_TEAM", "TURBO_REMOTE_ONLY"],
+  "globalEnv": [
+    "NODE_ENV",
+    "CI",
+    "TURBO_TOKEN",
+    "TURBO_TEAM",
+    "TURBO_REMOTE_ONLY",
+    "VITE_GATEWAY_HTTP_URL",
+    "VITE_GATEWAY_WS_URL"
+  ],
   "globalPassThroughEnv": ["npm_lifecycle_event"]
 }
