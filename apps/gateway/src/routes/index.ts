@@ -7,6 +7,7 @@ import { terminalRouter } from '../features/terminal/terminal.routes.js';
 import { gitRouter } from '../features/git/git.routes.js';
 import { collaborationRouter } from '../modules/collaboration/routes/collaboration.routes.js';
 import { adminRouter } from '../modules/admin/routes/admin.routes.js';
+import { aiRouter } from '../features/ai/ai.routes.js';
 
 // =============================================================================
 // DevSync AI — API Router
@@ -17,6 +18,10 @@ export const apiRouter = Router();
 
 // Health check — GET /api/health
 apiRouter.use('/health', healthRouter);
+
+// AI Assistance & Chat — /api/v1/ai/chat & /api/ai/chat
+apiRouter.use('/v1/ai', aiRouter);
+apiRouter.use('/ai', aiRouter);
 
 // Authentication — POST /api/v1/auth/register, /login, /refresh, /logout
 //               — GET  /api/v1/auth/me
