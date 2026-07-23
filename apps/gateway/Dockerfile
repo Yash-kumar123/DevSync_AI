@@ -12,6 +12,7 @@ RUN npm ci
 
 COPY . .
 
+RUN npm run build --workspace=@devsync/shared-types
 RUN npx prisma generate --schema=apps/gateway/prisma/schema.prisma
 RUN npm run build --workspace=@devsync/gateway
 
