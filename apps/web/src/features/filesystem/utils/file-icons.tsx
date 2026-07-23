@@ -9,6 +9,10 @@ import {
   SiMarkdown,
   SiPython,
   SiReact,
+  SiC,
+  SiCplusplus,
+  SiGo,
+  SiRust,
 } from 'react-icons/si';
 
 export function getFileIcon(filename: string): React.ReactNode {
@@ -33,6 +37,23 @@ export function getFileIcon(filename: string): React.ReactNode {
   }
   if (lower.endsWith('.md')) {
     return <SiMarkdown className="h-4 w-4 text-slate-300 shrink-0" />;
+  }
+  if (lower.endsWith('.c') || lower.endsWith('.h')) {
+    return <SiC className="h-4 w-4 text-blue-500 shrink-0" />;
+  }
+  if (
+    lower.endsWith('.cpp') ||
+    lower.endsWith('.cxx') ||
+    lower.endsWith('.cc') ||
+    lower.endsWith('.hpp')
+  ) {
+    return <SiCplusplus className="h-4 w-4 text-blue-600 shrink-0" />;
+  }
+  if (lower.endsWith('.go')) {
+    return <SiGo className="h-4 w-4 text-cyan-400 shrink-0" />;
+  }
+  if (lower.endsWith('.rs')) {
+    return <SiRust className="h-4 w-4 text-orange-400 shrink-0" />;
   }
   if (lower.endsWith('.py')) {
     return <SiPython className="h-4 w-4 text-emerald-400 shrink-0" />;

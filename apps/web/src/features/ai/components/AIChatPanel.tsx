@@ -80,7 +80,7 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({ workspaceId = 'default
           </div>
           <span className="text-xs font-bold text-slate-200 tracking-tight">DevSync AI</span>
           <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-indigo-500/10 text-indigo-400 border border-indigo-500/30">
-            qwen2.5-coder
+            Groq (llama-3.3-70b)
           </span>
         </div>
 

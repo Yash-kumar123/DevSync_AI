@@ -76,12 +76,37 @@ export class DockerService {
     const startTime = Date.now();
     const config = this.getLanguageConfig(dto.language, dto.fileName);
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'devsync_runner_'));
-    const filePath = path.join(tempDir, config.tempFileName);
+    let codeToWrite = dto.code;
+    const lang = dto.language.toLowerCase();
+    if (lang === 'c' || lang === 'cpp' || lang === 'c++') {
+      const hasMain = /\bint\s+main\s*\(|\bvoid\s+main\s*\(/.test(dto.code);
+      if (!hasMain) {
+        codeToWrite +=
+          '\n\nint main() {\n    printf("[DevSync AI] Note: Auto-generated main() entrypoint added for C compilation.\\n");\n    return 0;\n}\n';
+      }
+    }
 
-    fs.writeFileSync(filePath, dto.code, 'utf-8');
+    const filePath = path.join(tempDir, config.tempFileName);
+    fs.writeFileSync(filePath, codeToWrite, 'utf-8');
 
     let outputBuffer = '';
+    const MAX_OUTPUT_BYTES = 500 * 1024; // 500 KB safe limit
+    let isTruncated = false;
+
     const appendOutput = (text: string) => {
+      if (isTruncated) return;
+      if (outputBuffer.length + text.length > MAX_OUTPUT_BYTES) {
+        const remaining = MAX_OUTPUT_BYTES - outputBuffer.length;
+        if (remaining > 0) {
+          outputBuffer += text.slice(0, remaining);
+        }
+        outputBuffer += '\n[OUTPUT TRUNCATED: Execution output exceeded 500 KB limit]\n';
+        isTruncated = true;
+        if (onOutputChunk) {
+          onOutputChunk('\n[OUTPUT TRUNCATED: Execution output exceeded 500 KB limit]\n');
+        }
+        return;
+      }
       outputBuffer += text;
       if (onOutputChunk) {
         onOutputChunk(text);
@@ -117,11 +142,14 @@ export class DockerService {
 
           const child = spawn('docker', dockerCmd);
           this.activeProcesses.set(dto.workspaceId, child);
+          child.stdin?.end(); // Signal EOF to stdin so interactive input loops do not hang indefinitely
 
           const timeoutTimer = setTimeout(() => {
             child.kill('SIGKILL');
-            appendOutput('\n[ERROR] Execution timed out after 10 seconds.\n');
-          }, 10000);
+            appendOutput(
+              '\n[ERROR] Execution timed out after 15 seconds. (Note: Programs expecting interactive input like scanf/input() will time out if no input is provided).\n',
+            );
+          }, 15000);
 
           child.stdout?.on('data', (data: Buffer) => appendOutput(data.toString()));
           child.stderr?.on('data', (data: Buffer) => appendOutput(data.toString()));
@@ -148,11 +176,14 @@ export class DockerService {
           const shellCmd = config.runCmd;
           const child = spawn(shellCmd, { cwd: tempDir, shell: true });
           this.activeProcesses.set(dto.workspaceId, child);
+          child.stdin?.end(); // Signal EOF to stdin so interactive input loops do not hang indefinitely
 
           const timeoutTimer = setTimeout(() => {
             child.kill('SIGKILL');
-            appendOutput('\n[ERROR] Execution timed out after 10 seconds.\n');
-          }, 10000);
+            appendOutput(
+              '\n[ERROR] Execution timed out after 15 seconds. (Note: Programs expecting interactive input like scanf/input() will time out if no input is provided).\n',
+            );
+          }, 15000);
 
           child.stdout?.on('data', (data: Buffer) => appendOutput(data.toString()));
           child.stderr?.on('data', (data: Buffer) => appendOutput(data.toString()));

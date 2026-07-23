@@ -12,6 +12,8 @@ import {
 import { useTerminalStore } from '../store/terminal-store';
 import { useFileSystemStore } from '../../filesystem/store/filesystem-store';
 import { ExecutionStatusBadge } from './ExecutionStatusBadge';
+import { useAIChatStore } from '../../ai/store/ai-store';
+import { FiZap } from 'react-icons/fi';
 
 export const TerminalTabsHeader: React.FC = () => {
   const {
@@ -49,6 +51,15 @@ export const TerminalTabsHeader: React.FC = () => {
       language: activeFile.extension.replace(/^\./, '') || 'javascript',
       code: activeFile.content,
     });
+  };
+
+  const { sendMessage } = useAIChatStore();
+
+  const handleFixErrorWithAI = () => {
+    const errorText = activeTab?.content || '';
+    const fileCode = activeFile ? activeFile.content : '';
+    const prompt = `Please fix this code execution error:\n\nFile: ${activeFile?.fileName || 'Code'}\n\`\`\`${activeFile?.extension || ''}\n${fileCode}\n\`\`\`\n\nTerminal Log & Output:\n\`\`\`text\n${errorText}\n\`\`\``;
+    void sendMessage(prompt);
   };
 
   return (
@@ -109,6 +120,20 @@ export const TerminalTabsHeader: React.FC = () => {
           <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-indigo-500/10 text-indigo-400 border border-indigo-500/30">
             {activeFile.fileName}
           </span>
+        )}
+
+        {/* AI Auto-Fix Button on Error */}
+        {(activeTab?.status === 'failed' ||
+          (activeTab?.exitCode !== undefined && activeTab.exitCode !== 0)) && (
+          <button
+            onClick={handleFixErrorWithAI}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-semibold text-xs bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30 transition-all shadow-glow-sm"
+            title="Ask DevSync AI to diagnose and fix this terminal error"
+            id="terminal-ai-fix-btn"
+          >
+            <FiZap className="h-3.5 w-3.5 text-amber-400 animate-pulse" />
+            <span>AI Fix Error</span>
+          </button>
         )}
 
         {/* Run Code Button */}

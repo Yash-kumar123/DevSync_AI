@@ -29,8 +29,18 @@ class Settings(BaseSettings):
     cors_origins: CorsOrigins = ["http://localhost:3000"]
     log_level: str = "INFO"
 
-    # Declared for future integrations; no client is initialized at application startup.
+    # AI Provider Selection: 'groq' or 'ollama'
+    ai_provider: str = "groq"
+
+    # Groq Configuration
+    groq_api_key: str = ""
+    groq_model: str = "llama-3.3-70b-versatile"
+
+    # Ollama Configuration
     ollama_base_url: str = "http://localhost:11434"
+    ollama_model: str = "qwen2.5-coder:7b"
+
+    # Vectorstore
     chroma_persist_directory: str = ".chroma"
 
 
