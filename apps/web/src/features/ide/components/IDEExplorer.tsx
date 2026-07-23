@@ -13,7 +13,7 @@ export const IDEExplorer: React.FC<IDEExplorerProps> = ({ roomCode = 'DEV-SYNC-R
 
   return (
     <aside
-      className="w-64 border-r border-slate-800 bg-slate-900/95 flex flex-col shrink-0 select-none overflow-hidden z-10"
+      className="absolute md:relative inset-y-0 left-0 w-72 sm:w-64 border-r border-slate-800 bg-slate-900/95 flex flex-col shrink-0 select-none overflow-hidden z-20 md:z-10 shadow-2xl md:shadow-none"
       id="ide-explorer-sidebar"
     >
       <VSCodeExplorer workspaceId={roomCode} workspaceName={`EXPLORER: ${roomCode}`} />

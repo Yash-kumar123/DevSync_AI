@@ -127,18 +127,20 @@ export const IDETopNav: React.FC<IDETopNavProps> = ({ roomCode = 'DEMO-ROOM' }) 
         </div>
 
         {/* Workspace Room Name Badge */}
-        <div className="flex items-center gap-1.5 rounded-md bg-slate-800/80 border border-slate-700/60 px-2.5 py-0.5 text-xs font-mono">
-          <span className="text-slate-400">room:</span>
+        <div className="flex items-center gap-1 sm:gap-1.5 rounded-md bg-slate-800/80 border border-slate-700/60 px-2 py-0.5 text-[11px] sm:text-xs font-mono shrink-0">
+          <span className="text-slate-400 hidden xs:inline">room:</span>
           <span className="font-semibold text-indigo-400 tracking-wider">
             {roomCode.toUpperCase()}
           </span>
         </div>
       </div>
 
-      {/* Center section: Online Users Avatars & Connection Status */}
-      <div className="hidden md:flex items-center gap-3">
+      {/* Center section: Online Users Avatars & Connection Status (Visible on all screens) */}
+      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
         <OnlineUsersAvatars />
-        <ConnectionStatusBadge />
+        <div className="hidden sm:block">
+          <ConnectionStatusBadge />
+        </div>
       </div>
 
       {/* Right section: Action controls & Profile */}
