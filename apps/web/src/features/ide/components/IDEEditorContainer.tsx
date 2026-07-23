@@ -160,6 +160,8 @@ export const IDEEditorContainer: React.FC = () => {
               cursorBlinking: 'smooth',
               cursorSmoothCaretAnimation: 'on',
               renderLineHighlight: 'all',
+              inlineSuggest: { enabled: true },
+              suggestOnTriggerCharacters: true,
             }}
           />
         </div>

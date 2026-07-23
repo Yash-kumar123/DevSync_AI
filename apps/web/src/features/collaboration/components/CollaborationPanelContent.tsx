@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
-import { FiUsers, FiCopy, FiMessageSquare, FiSend } from 'react-icons/fi';
+import { FiUsers, FiCopy, FiMessageSquare, FiSend, FiEdit3 } from 'react-icons/fi';
 import { useCollaborationStore } from '../store/collaboration-store';
 import { useAuthStore } from '../../../store/auth-store';
 import { socketClient } from '../services/socket-client';
 import { ConnectionStatusBadge } from './ConnectionStatusBadge';
+import { CollaborativeWhiteboard } from './CollaborativeWhiteboard';
 
 interface ChatMessage {
   id: string;
@@ -17,6 +18,7 @@ export const CollaborationPanelContent: React.FC = () => {
   const { currentRoom, currentWorkspaceId, users } = useCollaborationStore();
   const currentUser = useAuthStore((state) => state.user);
 
+  const [activeSubTab, setActiveSubTab] = useState<'chat' | 'canvas'>('chat');
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -167,85 +169,115 @@ export const CollaborationPanelContent: React.FC = () => {
         </div>
       </div>
 
-      {/* Real-Time Live Communication Chat Section */}
-      <div className="flex-1 flex flex-col min-h-0 bg-slate-950/50">
-        {/* Chat Section Header */}
-        <div className="px-3.5 py-2 border-b border-slate-800 flex items-center gap-2 bg-slate-900/80">
-          <FiMessageSquare className="h-4 w-4 text-indigo-400" />
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
-            Team Communication Chat
-          </span>
-        </div>
-
-        {/* Chat Messages Feed */}
-        <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-2.5">
-          {chatMessages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center text-slate-500 p-4">
-              <FiMessageSquare className="h-8 w-8 text-slate-700 mb-2" />
-              <p className="text-xs font-semibold text-slate-400">Workspace Chat</p>
-              <p className="text-[11px] text-slate-500 max-w-[200px] mt-1">
-                Communicate live with team members joined in this room.
-              </p>
-            </div>
-          ) : (
-            chatMessages.map((msg) => {
-              const isSelf = currentUser && msg.user.id === currentUser.id;
-              const timeStr = new Date(msg.timestamp).toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-              });
-
-              return (
-                <div
-                  key={msg.id}
-                  className={`flex flex-col ${isSelf ? 'items-end' : 'items-start'}`}
-                >
-                  <div className="flex items-center gap-1.5 mb-1 text-[10px] text-slate-400 px-1">
-                    <span className="font-semibold text-slate-300">
-                      {isSelf ? 'You' : msg.user.displayName}
-                    </span>
-                    <span>•</span>
-                    <span className="font-mono">{timeStr}</span>
-                  </div>
-
-                  <div
-                    className={`max-w-[85%] px-3 py-2 rounded-2xl text-xs leading-relaxed ${
-                      isSelf
-                        ? 'bg-indigo-600 text-white rounded-tr-none shadow-md'
-                        : 'bg-slate-800 text-slate-200 border border-slate-700 rounded-tl-none'
-                    }`}
-                  >
-                    {msg.message}
-                  </div>
-                </div>
-              );
-            })
-          )}
-          <div ref={messagesEndRef} />
-        </div>
-
-        {/* Chat Input Form */}
-        <form
-          onSubmit={handleSendMessage}
-          className="p-2 border-t border-slate-800 bg-slate-900/90 flex items-center gap-2"
-        >
-          <input
-            type="text"
-            placeholder="Type a message to team..."
-            value={inputMessage}
-            onChange={(e) => setInputMessage(e.target.value)}
-            className="flex-1 bg-slate-950 text-slate-100 text-xs px-3 py-2 rounded-lg border border-slate-700/70 focus:outline-none focus:border-indigo-500 transition-colors"
-          />
+      {/* Real-Time Subtab Switcher: Chat vs Architecture Canvas */}
+      <div className="px-3 py-1.5 border-b border-slate-800 bg-slate-950 flex items-center justify-between">
+        <div className="flex items-center gap-1">
           <button
-            type="submit"
-            disabled={!inputMessage.trim()}
-            className="p-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white transition-all shadow-glow-sm shrink-0"
-            title="Send Message"
+            onClick={() => setActiveSubTab('chat')}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+              activeSubTab === 'chat'
+                ? 'bg-indigo-600 text-white shadow-glow-sm'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+            }`}
           >
-            <FiSend className="h-3.5 w-3.5" />
+            <FiMessageSquare className="h-3.5 w-3.5" />
+            <span>Team Chat</span>
           </button>
-        </form>
+          <button
+            onClick={() => setActiveSubTab('canvas')}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+              activeSubTab === 'canvas'
+                ? 'bg-indigo-600 text-white shadow-glow-sm'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+            }`}
+          >
+            <FiEdit3 className="h-3.5 w-3.5" />
+            <span>Architecture Canvas</span>
+          </button>
+        </div>
       </div>
+
+      {activeSubTab === 'canvas' ? (
+        <CollaborativeWhiteboard />
+      ) : (
+        /* Real-Time Live Communication Chat Section */
+        <div className="flex-1 flex flex-col min-h-0 bg-slate-950/50">
+          {/* Chat Section Header */}
+          <div className="px-3.5 py-2 border-b border-slate-800 flex items-center gap-2 bg-slate-900/80">
+            <FiMessageSquare className="h-4 w-4 text-indigo-400" />
+            <span className="font-bold text-xs text-white">Live Workspace Chat</span>
+          </div>
+
+          {/* Chat Messages Feed */}
+          <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-2.5">
+            {chatMessages.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-center text-slate-500 p-4">
+                <FiMessageSquare className="h-8 w-8 text-slate-700 mb-2" />
+                <p className="text-xs font-semibold text-slate-400">Workspace Chat</p>
+                <p className="text-[11px] text-slate-500 max-w-[200px] mt-1">
+                  Communicate live with team members joined in this room.
+                </p>
+              </div>
+            ) : (
+              chatMessages.map((msg) => {
+                const isSelf = currentUser && msg.user.id === currentUser.id;
+                const timeStr = new Date(msg.timestamp).toLocaleTimeString([], {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                });
+
+                return (
+                  <div
+                    key={msg.id}
+                    className={`flex flex-col ${isSelf ? 'items-end' : 'items-start'}`}
+                  >
+                    <div className="flex items-center gap-1.5 mb-1 text-[10px] text-slate-400 px-1">
+                      <span className="font-semibold text-slate-300">
+                        {isSelf ? 'You' : msg.user.displayName}
+                      </span>
+                      <span>•</span>
+                      <span className="font-mono">{timeStr}</span>
+                    </div>
+
+                    <div
+                      className={`max-w-[85%] px-3 py-2 rounded-2xl text-xs leading-relaxed ${
+                        isSelf
+                          ? 'bg-indigo-600 text-white rounded-tr-none shadow-md'
+                          : 'bg-slate-800 text-slate-200 border border-slate-700 rounded-tl-none'
+                      }`}
+                    >
+                      {msg.message}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* Chat Input Form */}
+          <form
+            onSubmit={handleSendMessage}
+            className="p-2 border-t border-slate-800 bg-slate-900/90 flex items-center gap-2"
+          >
+            <input
+              type="text"
+              placeholder="Type a message to team..."
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              className="flex-1 bg-slate-950 text-slate-100 text-xs px-3 py-2 rounded-lg border border-slate-700/70 focus:outline-none focus:border-indigo-500 transition-colors"
+            />
+            <button
+              type="submit"
+              disabled={!inputMessage.trim()}
+              className="p-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white transition-all shadow-glow-sm shrink-0"
+              title="Send Message"
+            >
+              <FiSend className="h-3.5 w-3.5" />
+            </button>
+          </form>
+        </div>
+      )}
     </div>
   );
 };
