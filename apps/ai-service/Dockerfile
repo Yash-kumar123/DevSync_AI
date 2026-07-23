@@ -12,4 +12,4 @@ RUN pip install --no-cache-dir --upgrade pip && pip install --no-cache-dir -e .
 
 EXPOSE 5000
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "5000", "--reload"]
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-5000}"]
