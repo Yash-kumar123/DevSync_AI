@@ -47,12 +47,20 @@ export const IDERightPanel: React.FC = () => {
   ];
 
   return (
-    <div className="flex shrink-0 select-none z-20" id="ide-right-panel-wrapper">
+    <div className="flex shrink-0 select-none z-30 md:z-20 relative" id="ide-right-panel-wrapper">
+      {/* Mobile backdrop shadow to dismiss right panel on tap */}
+      {rightPanelOpen && (
+        <div
+          onClick={toggleRightPanel}
+          className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs z-20 md:hidden animate-in fade-in duration-150"
+        />
+      )}
+
       {/* Expanded Panel */}
       {rightPanelOpen && (
         <aside
-          className="border-l border-slate-800 bg-slate-900/95 flex flex-col overflow-hidden shadow-xl relative"
-          style={{ width: `${panelWidth}px` }}
+          className="absolute md:relative right-11 md:right-0 inset-y-0 border-l border-slate-800 bg-slate-900/95 flex flex-col overflow-hidden shadow-2xl z-30 md:z-10 max-w-[calc(100vw-2.75rem)] transition-all duration-150"
+          style={{ width: `${Math.min(panelWidth, window.innerWidth - 48)}px` }}
         >
           {/* Draggable Left Width Resize Handle */}
           <div

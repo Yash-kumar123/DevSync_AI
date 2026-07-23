@@ -292,11 +292,11 @@ export const IDETopNav: React.FC<IDETopNavProps> = ({ roomCode = 'DEMO-ROOM' }) 
       </div>
 
       {/* Right section: Action controls & Profile */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1 sm:gap-2">
         {/* Invite Teammate Button */}
         <button
           onClick={() => setIsInviteModalOpen(true)}
-          className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-glow-sm transition-all"
+          className="flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-md text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-glow-sm transition-all"
           title="Invite Teammates & Share QR Code"
           id="ide-invite-btn"
         >
@@ -307,7 +307,7 @@ export const IDETopNav: React.FC<IDETopNavProps> = ({ roomCode = 'DEMO-ROOM' }) 
         {/* Voice Channel Toggle */}
         <button
           onClick={() => void handleToggleVoiceChannel()}
-          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border transition-all ${
+          className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-md text-xs font-medium border transition-all ${
             isVoiceConnected
               ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40 animate-pulse'
               : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700'
@@ -326,7 +326,7 @@ export const IDETopNav: React.FC<IDETopNavProps> = ({ roomCode = 'DEMO-ROOM' }) 
         {/* Export Project Button */}
         <button
           onClick={handleExportProjectFiles}
-          className="p-1.5 rounded-md text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
+          className="p-1 sm:p-1.5 rounded-md text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
           title="Export Project File"
           id="ide-export-btn"
         >
@@ -336,18 +336,18 @@ export const IDETopNav: React.FC<IDETopNavProps> = ({ roomCode = 'DEMO-ROOM' }) 
         {/* Top Run Code Button */}
         <button
           onClick={handleRunActiveCode}
-          className="flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-glow-sm transition-all"
+          className="flex items-center gap-1 px-2.5 sm:px-3 py-1 rounded-md text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-glow-sm transition-all"
           title="Run Code in Sandbox (Ctrl+Enter)"
           id="ide-top-run-btn"
         >
           <FiPlay className="h-3.5 w-3.5" />
-          <span>Run</span>
+          <span className="hidden xs:inline">Run</span>
         </button>
 
         {/* Terminal Toggle Button */}
         <button
           onClick={toggleBottomPanel}
-          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ${
+          className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ${
             bottomPanelOpen
               ? 'bg-indigo-600/20 text-indigo-400 border-indigo-500/40'
               : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700'
@@ -362,7 +362,7 @@ export const IDETopNav: React.FC<IDETopNavProps> = ({ roomCode = 'DEMO-ROOM' }) 
         {/* Save Button */}
         <button
           onClick={handleSave}
-          className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors"
+          className="flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-md text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors"
           title="Save file (Ctrl+S)"
           id="ide-save-btn"
         >

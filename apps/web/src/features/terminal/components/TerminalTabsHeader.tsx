@@ -130,7 +130,7 @@ export const TerminalTabsHeader: React.FC = () => {
         )}
 
         {activeFile && (
-          <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-indigo-500/10 text-indigo-400 border border-indigo-500/30">
+          <span className="hidden sm:inline-block px-2 py-0.5 rounded text-[10px] font-mono bg-indigo-500/10 text-indigo-400 border border-indigo-500/30 truncate max-w-[100px]">
             {activeFile.fileName}
           </span>
         )}
@@ -140,12 +140,12 @@ export const TerminalTabsHeader: React.FC = () => {
           (activeTab?.exitCode !== undefined && activeTab.exitCode !== 0)) && (
           <button
             onClick={handleFixErrorWithAI}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-semibold text-xs bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30 transition-all shadow-glow-sm"
+            className="flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-lg font-semibold text-xs bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30 transition-all shadow-glow-sm"
             title="Ask DevSync AI to diagnose and fix this terminal error"
             id="terminal-ai-fix-btn"
           >
             <FiZap className="h-3.5 w-3.5 text-amber-400 animate-pulse" />
-            <span>AI Fix Error</span>
+            <span className="hidden xs:inline">AI Fix</span>
           </button>
         )}
 
@@ -153,7 +153,7 @@ export const TerminalTabsHeader: React.FC = () => {
         <button
           onClick={handleRunActiveFile}
           disabled={activeTab?.status === 'running'}
-          className={`flex items-center gap-1.5 px-3 py-1 rounded-lg font-semibold text-xs transition-all ${
+          className={`flex items-center gap-1 px-2.5 sm:px-3 py-1 rounded-lg font-semibold text-xs transition-all ${
             activeTab?.status === 'running'
               ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
               : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-glow-sm'
@@ -162,7 +162,7 @@ export const TerminalTabsHeader: React.FC = () => {
           id="terminal-run-code-btn"
         >
           <FiPlay className="h-3.5 w-3.5" />
-          <span>Run</span>
+          <span className="hidden xs:inline">Run</span>
         </button>
 
         <button
