@@ -5,14 +5,22 @@ import { IDEEditorContainer } from './IDEEditorContainer';
 import { IDERightPanel } from './IDERightPanel';
 import { IDEStatusBar } from './IDEStatusBar';
 import { TerminalPanel } from '../../terminal/components/TerminalPanel';
+import { useIDEStore } from '../store/ide-store';
 
 interface IDELayoutProps {
   roomCode?: string | undefined;
 }
 
 export const IDELayout: React.FC<IDELayoutProps> = ({ roomCode }) => {
+  const { editorSettings } = useIDEStore();
+  const isDark = editorSettings.theme === 'vs-dark';
+
   return (
-    <div className="h-screen w-screen flex flex-col bg-slate-950 overflow-hidden font-sans">
+    <div
+      className={`h-screen w-screen flex flex-col overflow-hidden font-sans transition-colors duration-200 ${
+        isDark ? 'bg-black text-slate-100' : 'bg-slate-100 text-slate-900'
+      }`}
+    >
       {/* Top Navigation Bar */}
       <IDETopNav roomCode={roomCode} />
 

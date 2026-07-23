@@ -149,16 +149,36 @@ export const IDETopNav: React.FC<IDETopNavProps> = ({ roomCode = 'DEMO-ROOM' }) 
     });
   };
 
+  const isDark = editorSettings.theme === 'vs-dark';
+
   const handleThemeToggle = () => {
     const nextTheme = editorSettings.theme === 'vs-dark' ? 'light' : 'vs-dark';
     updateEditorSettings({ theme: nextTheme });
-    toast.success(`Theme switched to ${nextTheme === 'vs-dark' ? 'Dark' : 'Light'}`, {
-      duration: 1500,
-    });
+
+    if (nextTheme === 'light') {
+      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.add('light');
+    } else {
+      document.documentElement.classList.remove('light');
+      document.documentElement.classList.add('dark');
+    }
+
+    toast.success(
+      `Theme switched to ${nextTheme === 'vs-dark' ? 'Dark (Black & White)' : 'Light (White & Black)'}`,
+      {
+        duration: 1500,
+      },
+    );
   };
 
   return (
-    <header className="h-12 border-b border-slate-800 bg-slate-900/90 backdrop-blur-md px-3 flex items-center justify-between text-slate-300 select-none z-30">
+    <header
+      className={`h-12 border-b px-3 flex items-center justify-between select-none z-30 transition-colors duration-200 ${
+        isDark
+          ? 'border-slate-800 bg-black/90 text-slate-200'
+          : 'border-slate-200 bg-white text-slate-900 shadow-sm'
+      }`}
+    >
       {/* Left section: Logo & Sidebar Toggle */}
       <div className="flex items-center gap-3">
         <button

@@ -22,11 +22,18 @@ function formatLanguage(fileId: string | null): string {
 
 export const IDEStatusBar: React.FC<IDEStatusBarProps> = ({ roomCode = 'DEMO-ROOM' }) => {
   const { activeFileId, cursorPosition, editorSettings } = useIDEStore();
+  const isDark = editorSettings.theme === 'vs-dark';
 
   const language = formatLanguage(activeFileId);
 
   return (
-    <footer className="h-6 border-t border-slate-800 bg-slate-900 px-3 flex items-center justify-between text-[11px] font-mono text-slate-400 select-none z-30">
+    <footer
+      className={`h-6 border-t px-3 flex items-center justify-between text-[11px] font-mono select-none z-30 transition-colors duration-200 ${
+        isDark
+          ? 'border-slate-800 bg-black text-slate-400'
+          : 'border-slate-300 bg-slate-200 text-slate-700 font-semibold'
+      }`}
+    >
       {/* Left side: Connection status & Workspace Name */}
       <div className="flex items-center gap-4">
         {/* Connection status */}
