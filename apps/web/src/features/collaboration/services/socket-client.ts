@@ -36,8 +36,13 @@ export class SocketClientService {
     }
 
     const token = useAuthStore.getState().accessToken;
+    const rawUrl =
+      import.meta.env.VITE_GATEWAY_WS_URL ||
+      import.meta.env.VITE_GATEWAY_HTTP_URL ||
+      import.meta.env.VITE_API_URL;
+    const socketTargetUrl = rawUrl ? rawUrl.replace(/\/+$/, '') : undefined;
 
-    this.socket = io({
+    const socketOptions = {
       path: '/socket.io',
       auth: { token },
       transports: ['websocket', 'polling'],
@@ -45,7 +50,9 @@ export class SocketClientService {
       reconnectionAttempts: 10,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
-    });
+    };
+
+    this.socket = socketTargetUrl ? io(socketTargetUrl, socketOptions) : io(socketOptions);
 
     this.registerSocketListeners(this.socket);
     return this.socket;
