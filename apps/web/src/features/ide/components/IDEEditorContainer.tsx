@@ -1,9 +1,11 @@
 import React, { useRef, useEffect } from 'react';
 import Editor, { type OnMount, type OnChange } from '@monaco-editor/react';
 import type { editor } from 'monaco-editor';
+import toast from 'react-hot-toast';
 import { useIDEStore } from '../store/ide-store';
 import { useFileSystemStore } from '../../filesystem/store/filesystem-store';
 import { useCollaborationStore } from '../../collaboration/store/collaboration-store';
+import { useAIChatStore } from '../../ai/store/ai-store';
 import { socketClient } from '../../collaboration/services/socket-client';
 import { YjsProviderService } from '../../collaboration/services/yjs-provider';
 import { remoteCursorsManager } from '../../collaboration/components/RemoteCursorsManager';
@@ -73,6 +75,27 @@ export const IDEEditorContainer: React.FC = () => {
     if (yjsProviderRef.current) {
       yjsProviderRef.current.bindToEditor(editorInstance);
     }
+
+    // Add custom Monaco Context Menu item: Ask AI to Review & Refactor Code
+    editorInstance.addAction({
+      id: 'devsync-ai-code-review',
+      label: '✨ DevSync AI: Review & Refactor Code',
+      keybindings: [],
+      contextMenuGroupId: 'navigation',
+      contextMenuOrder: 1.5,
+      run: (ed) => {
+        const selection = ed.getSelection();
+        const selectedText = selection ? ed.getModel()?.getValueInRange(selection) : '';
+        if (selectedText && selectedText.trim()) {
+          const prompt = `Please review and refactor this code snippet:\n\`\`\`${language}\n${selectedText}\n\`\`\``;
+          useIDEStore.getState().setActiveRightTab('ai');
+          void useAIChatStore.getState().sendMessage(prompt);
+          toast.success('Sent code snippet to AI Assistant!', { icon: '✨' });
+        } else {
+          toast.error('Please highlight code first to review with AI.');
+        }
+      },
+    });
 
     // Track cursor position and broadcast over Socket.io
     editorInstance.onDidChangeCursorPosition((e) => {

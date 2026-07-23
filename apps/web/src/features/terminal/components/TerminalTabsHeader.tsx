@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   FiTerminal,
   FiPlus,
@@ -8,12 +7,14 @@ import {
   FiStopCircle,
   FiMaximize2,
   FiMinimize2,
+  FiDownload,
+  FiZap,
 } from 'react-icons/fi';
+import toast from 'react-hot-toast';
 import { useTerminalStore } from '../store/terminal-store';
 import { useFileSystemStore } from '../../filesystem/store/filesystem-store';
 import { ExecutionStatusBadge } from './ExecutionStatusBadge';
 import { useAIChatStore } from '../../ai/store/ai-store';
-import { FiZap } from 'react-icons/fi';
 
 export const TerminalTabsHeader: React.FC = () => {
   const {
@@ -33,6 +34,18 @@ export const TerminalTabsHeader: React.FC = () => {
   const { activeFileId, files } = useFileSystemStore();
   const activeFile = activeFileId ? files.find((f) => f.id === activeFileId) || null : null;
   const activeTab = tabs.find((t) => t.id === activeTabId) || tabs[0];
+
+  const handleDownloadLog = () => {
+    const logContent = activeTab?.content || 'Terminal log empty.';
+    const blob = new Blob([logContent], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `terminal-log-${Date.now()}.log`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success('Terminal log downloaded!', { icon: '📥' });
+  };
 
   const handleRunActiveFile = () => {
     if (!activeFile) {
@@ -164,6 +177,15 @@ export const TerminalTabsHeader: React.FC = () => {
           id="terminal-kill-btn"
         >
           <FiStopCircle className="h-3.5 w-3.5" />
+        </button>
+
+        <button
+          onClick={handleDownloadLog}
+          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors"
+          title="Download Terminal Log"
+          id="terminal-download-log-btn"
+        >
+          <FiDownload className="h-3.5 w-3.5" />
         </button>
 
         <button

@@ -10,6 +10,13 @@ import {
   FiMoon,
   FiPlay,
   FiTerminal,
+  FiUserPlus,
+  FiDownload,
+  FiMic,
+  FiMicOff,
+  FiX,
+  FiCopy,
+  FiCheck,
 } from 'react-icons/fi';
 import { useAuth } from '@hooks/useAuth';
 import { useIDEStore } from '../store/ide-store';
@@ -34,6 +41,12 @@ export const IDETopNav: React.FC<IDETopNavProps> = ({ roomCode = 'DEMO-ROOM' }) 
   const { files, activeFileId } = useFileSystemStore();
 
   const [showSettingsDropdown, setShowSettingsDropdown] = useState(false);
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [hasCopiedLink, setHasCopiedLink] = useState(false);
+  const [isVoiceConnected, setIsVoiceConnected] = useState(false);
+  const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
+
+  const inviteUrl = `${window.location.origin}/workspace/${roomCode}`;
 
   // Auto-connect socket and join room when IDE mounts
   useEffect(() => {
@@ -50,6 +63,53 @@ export const IDETopNav: React.FC<IDETopNavProps> = ({ roomCode = 'DEMO-ROOM' }) 
       socketClient.leaveRoom();
     };
   }, [user, roomCode]);
+
+  const handleCopyInviteLink = () => {
+    void navigator.clipboard.writeText(inviteUrl);
+    setHasCopiedLink(true);
+    toast.success('Room Invite Link copied to clipboard!', { icon: '🔗', duration: 2500 });
+    setTimeout(() => setHasCopiedLink(false), 3000);
+  };
+
+  const handleToggleVoiceChannel = async () => {
+    if (isVoiceConnected) {
+      if (mediaStream) {
+        mediaStream.getTracks().forEach((t) => t.stop());
+        setMediaStream(null);
+      }
+      setIsVoiceConnected(false);
+      toast('Voice channel disconnected', { icon: '🔇' });
+    } else {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        setMediaStream(stream);
+        setIsVoiceConnected(true);
+        toast.success('Connected to Voice Channel! Live mic active.', { icon: '🎙️' });
+      } catch {
+        toast.error('Could not access microphone for Voice Channel.');
+      }
+    }
+  };
+
+  const handleExportProjectFiles = () => {
+    if (files.length === 0) {
+      toast.error('No files to export in current workspace.');
+      return;
+    }
+
+    // Export primary active file or bundle
+    const activeFile = files.find((f) => f.id === activeFileId) || files[0];
+    if (activeFile) {
+      const blob = new Blob([activeFile.content], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = activeFile.fileName;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success(`Exported ${activeFile.fileName}!`, { icon: '📦' });
+    }
+  };
 
   const handleSave = () => {
     const file = activeFileId ? files.find((f) => f.id === activeFileId) : null;
@@ -145,6 +205,46 @@ export const IDETopNav: React.FC<IDETopNavProps> = ({ roomCode = 'DEMO-ROOM' }) 
 
       {/* Right section: Action controls & Profile */}
       <div className="flex items-center gap-2">
+        {/* Invite Teammate Button */}
+        <button
+          onClick={() => setIsInviteModalOpen(true)}
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-glow-sm transition-all"
+          title="Invite Teammates & Share QR Code"
+          id="ide-invite-btn"
+        >
+          <FiUserPlus className="h-3.5 w-3.5" />
+          <span className="hidden md:inline">Invite</span>
+        </button>
+
+        {/* Voice Channel Toggle */}
+        <button
+          onClick={() => void handleToggleVoiceChannel()}
+          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border transition-all ${
+            isVoiceConnected
+              ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40 animate-pulse'
+              : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700'
+          }`}
+          title={isVoiceConnected ? 'Disconnect Voice Channel' : 'Connect Voice Channel (WebRTC)'}
+          id="ide-voice-btn"
+        >
+          {isVoiceConnected ? (
+            <FiMic className="h-3.5 w-3.5 text-emerald-400" />
+          ) : (
+            <FiMicOff className="h-3.5 w-3.5 text-slate-400" />
+          )}
+          <span className="hidden lg:inline">{isVoiceConnected ? 'Voice On' : 'Voice'}</span>
+        </button>
+
+        {/* Export Project Button */}
+        <button
+          onClick={handleExportProjectFiles}
+          className="p-1.5 rounded-md text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
+          title="Export Project File"
+          id="ide-export-btn"
+        >
+          <FiDownload className="h-4 w-4" />
+        </button>
+
         {/* Top Run Code Button */}
         <button
           onClick={handleRunActiveCode}
@@ -299,6 +399,76 @@ export const IDETopNav: React.FC<IDETopNavProps> = ({ roomCode = 'DEMO-ROOM' }) 
           </Button>
         </div>
       </div>
+
+      {/* Invite Teammate & QR Code Share Modal */}
+      {isInviteModalOpen && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl p-5 max-w-sm w-full shadow-2xl flex flex-col gap-4 text-slate-200 animate-in fade-in zoom-in-95 duration-150 relative">
+            <button
+              onClick={() => setIsInviteModalOpen(false)}
+              className="absolute top-4 right-4 p-1 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg"
+            >
+              <FiX className="h-4 w-4" />
+            </button>
+
+            <div className="flex items-center gap-2.5">
+              <div className="h-9 w-9 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shrink-0">
+                <FiUserPlus className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-sm text-white">Invite Teammates</h3>
+                <p className="text-xs text-slate-400">Share room link or scan QR code to join</p>
+              </div>
+            </div>
+
+            {/* Room Code Badge */}
+            <div className="flex flex-col gap-1 bg-slate-950 p-3 rounded-xl border border-slate-800">
+              <span className="text-[10px] uppercase font-bold text-slate-400">Room Code</span>
+              <span className="text-base font-mono font-bold text-indigo-400 tracking-wider">
+                {roomCode.toUpperCase()}
+              </span>
+            </div>
+
+            {/* Copyable Shareable Link */}
+            <div className="flex flex-col gap-1.5">
+              <span className="text-xs font-semibold text-slate-300">Direct Join URL</span>
+              <div className="flex items-center gap-2 bg-slate-950 p-2 rounded-xl border border-slate-800">
+                <input
+                  type="text"
+                  readOnly
+                  value={inviteUrl}
+                  className="bg-transparent text-xs text-slate-300 font-mono flex-1 outline-none truncate"
+                />
+                <button
+                  onClick={handleCopyInviteLink}
+                  className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs flex items-center gap-1 shrink-0 transition-all shadow-glow-sm"
+                >
+                  {hasCopiedLink ? (
+                    <FiCheck className="h-3.5 w-3.5" />
+                  ) : (
+                    <FiCopy className="h-3.5 w-3.5" />
+                  )}
+                  <span>{hasCopiedLink ? 'Copied!' : 'Copy'}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* QR Code Display for Instant Mobile Scan */}
+            <div className="flex flex-col items-center gap-2 pt-2 border-t border-slate-800">
+              <span className="text-[11px] text-slate-400 font-medium">Scan to join on Mobile</span>
+              <div className="p-2.5 bg-white rounded-xl shadow-md border border-slate-200">
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(
+                    inviteUrl,
+                  )}`}
+                  alt="Room Join QR Code"
+                  className="h-28 w-28 object-contain"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 };
