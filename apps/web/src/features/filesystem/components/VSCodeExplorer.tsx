@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { FiFilePlus, FiFolderPlus, FiMinusSquare, FiRefreshCw, FiFolder } from 'react-icons/fi';
 import { useFileSystemStore } from '../store/filesystem-store';
+import { socketClient } from '../../collaboration/services/socket-client';
 import { ExplorerTreeItem } from './ExplorerTreeItem';
 import { ExplorerContextMenu } from './ExplorerContextMenu';
 
@@ -33,6 +34,17 @@ export const VSCodeExplorer: React.FC<VSCodeExplorerProps> = ({
     if (workspaceId) {
       void fetchWorkspaceFileSystem(workspaceId);
     }
+
+    // Automatically sync workspace file tree when peers create, edit, or delete files
+    const unsubscribe = socketClient.onFileChanged(() => {
+      if (workspaceId) {
+        void fetchWorkspaceFileSystem(workspaceId);
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
   }, [workspaceId, fetchWorkspaceFileSystem]);
 
   const handleNewFile = () => {

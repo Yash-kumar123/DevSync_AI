@@ -9,6 +9,7 @@ import type {
 } from '../types/filesystem.types';
 import { filesystemService } from '../services/filesystem.service';
 import { buildFileTree } from '../utils/tree-builder';
+import { socketClient } from '../../collaboration/services/socket-client';
 
 // Debounce timer store per file id
 const autoSaveTimers: Record<string, NodeJS.Timeout> = {};
@@ -120,6 +121,7 @@ export const useFileSystemStore = create<FileSystemState>((set, get) => ({
         creatingNode: null,
         expandedFolderIds: expanded,
       });
+      socketClient.emitFileChanged(workspaceId, 'create', name);
       toast.success(`Folder '${name}' created`);
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed to create folder');
@@ -127,13 +129,14 @@ export const useFileSystemStore = create<FileSystemState>((set, get) => ({
   },
 
   renameFolder: async (id: string, name: string) => {
-    const { folders, files } = get();
+    const { workspaceId, folders, files } = get();
     try {
       const updatedFolder = await filesystemService.updateFolder(id, name);
       const updatedFolders = folders.map((f) => (f.id === id ? updatedFolder : f));
       const updatedTree = buildFileTree(updatedFolders, files);
 
       set({ folders: updatedFolders, tree: updatedTree, renamingNodeId: null });
+      if (workspaceId) socketClient.emitFileChanged(workspaceId, 'update', name);
       toast.success(`Folder renamed to '${name}'`);
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed to rename folder');
@@ -141,7 +144,7 @@ export const useFileSystemStore = create<FileSystemState>((set, get) => ({
   },
 
   deleteFolder: async (id: string) => {
-    const { folders, files } = get();
+    const { workspaceId, folders, files } = get();
     try {
       await filesystemService.deleteFolder(id);
       const updatedFolders = folders.filter((f) => f.id !== id);
@@ -149,6 +152,7 @@ export const useFileSystemStore = create<FileSystemState>((set, get) => ({
       const updatedTree = buildFileTree(updatedFolders, updatedFiles);
 
       set({ folders: updatedFolders, files: updatedFiles, tree: updatedTree });
+      if (workspaceId) socketClient.emitFileChanged(workspaceId, 'delete');
       toast.success('Folder deleted');
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed to delete folder');
@@ -175,6 +179,7 @@ export const useFileSystemStore = create<FileSystemState>((set, get) => ({
       });
 
       get().openFile(newFile);
+      socketClient.emitFileChanged(workspaceId, 'create', fileName);
       toast.success(`File '${fileName}' created`);
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed to create file');
@@ -182,7 +187,7 @@ export const useFileSystemStore = create<FileSystemState>((set, get) => ({
   },
 
   renameFile: async (id: string, fileName: string) => {
-    const { folders, files, openFiles } = get();
+    const { workspaceId, folders, files, openFiles } = get();
     try {
       const updatedFile = await filesystemService.updateFile(id, { fileName });
       const updatedFiles = files.map((f) => (f.id === id ? updatedFile : f));
@@ -195,6 +200,7 @@ export const useFileSystemStore = create<FileSystemState>((set, get) => ({
         tree: updatedTree,
         renamingNodeId: null,
       });
+      if (workspaceId) socketClient.emitFileChanged(workspaceId, 'update', fileName);
       toast.success(`File renamed to '${fileName}'`);
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed to rename file');

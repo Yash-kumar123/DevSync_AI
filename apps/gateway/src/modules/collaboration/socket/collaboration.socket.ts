@@ -142,6 +142,41 @@ export class CollaborationSocketHandler {
       },
     );
 
+    // ── Live Workspace Chat Message ─────────────────────────────────────────
+    socket.on(
+      'chat-message',
+      (payload: {
+        workspaceId?: string;
+        roomCode?: string;
+        message: string;
+        user?: { id: string; displayName: string; username?: string; avatarUrl?: string };
+      }) => {
+        const roomKey = payload.workspaceId ? `workspace:${payload.workspaceId}` : payload.roomCode;
+        if (!roomKey || !payload.message?.trim()) return;
+
+        const chatPayload = {
+          id: `msg-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+          workspaceId: payload.workspaceId || payload.roomCode,
+          roomCode: payload.roomCode || payload.workspaceId,
+          message: payload.message.trim(),
+          user: payload.user || { id: socket.id, displayName: 'Developer', username: 'peer' },
+          timestamp: new Date().toISOString(),
+        };
+
+        io.to(roomKey).emit('chat-message', chatPayload);
+      },
+    );
+
+    // ── File/Folder Sync Notification ────────────────────────────────────────
+    socket.on(
+      'file-changed',
+      (payload: { workspaceId?: string; roomCode?: string; action: string; fileName?: string }) => {
+        const roomKey = payload.workspaceId ? `workspace:${payload.workspaceId}` : payload.roomCode;
+        if (!roomKey) return;
+        socket.to(roomKey).emit('file-changed', payload);
+      },
+    );
+
     // ── Socket Disconnect Handler ───────────────────────────────────────────
     socket.on('disconnect', () => {
       const { workspaceId, userId, remainingUsers } = this.presenceService.userLeft(socket.id);

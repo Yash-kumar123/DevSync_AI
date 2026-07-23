@@ -28,6 +28,19 @@ export class SocketClientService {
   private currentWorkspaceId: string | null = null;
   private currentRoomCode: string | null = null;
   private editorChangeCallbacks: Array<(update: string, filePath?: string) => void> = [];
+  private chatMessageCallbacks: Array<
+    (msg: {
+      id: string;
+      roomCode?: string;
+      workspaceId?: string;
+      message: string;
+      user: { id: string; displayName: string; username?: string; avatarUrl?: string };
+      timestamp: string;
+    }) => void
+  > = [];
+  private fileChangedCallbacks: Array<
+    (event: { roomCode?: string; workspaceId?: string; action: string; fileName?: string }) => void
+  > = [];
 
   /** Get active Socket.io client instance or establish connection. */
   connect(): Socket {
@@ -202,6 +215,27 @@ export class SocketClientService {
         }
       },
     );
+
+    socket.on(
+      'chat-message',
+      (payload: {
+        id: string;
+        roomCode?: string;
+        workspaceId?: string;
+        message: string;
+        user: { id: string; displayName: string; username?: string; avatarUrl?: string };
+        timestamp: string;
+      }) => {
+        this.chatMessageCallbacks.forEach((cb) => cb(payload));
+      },
+    );
+
+    socket.on(
+      'file-changed',
+      (payload: { roomCode?: string; workspaceId?: string; action: string; fileName?: string }) => {
+        this.fileChangedCallbacks.forEach((cb) => cb(payload));
+      },
+    );
   }
 
   /** Join workspace real-time room. */
@@ -323,6 +357,70 @@ export class SocketClientService {
     this.editorChangeCallbacks.push(callback);
     return () => {
       this.editorChangeCallbacks = this.editorChangeCallbacks.filter((cb) => cb !== callback);
+    };
+  }
+
+  /** Emit chat message to room peers. */
+  emitChatMessage(
+    roomOrWorkspaceId: string,
+    message: string,
+    user?: { id: string; displayName: string; username?: string; avatarUrl?: string },
+  ): void {
+    if (this.socket && this.socket.connected) {
+      this.socket.emit('chat-message', {
+        roomCode: roomOrWorkspaceId,
+        workspaceId: roomOrWorkspaceId,
+        message,
+        user,
+      });
+    }
+  }
+
+  /** Register chat message listener. */
+  onChatMessage(
+    callback: (msg: {
+      id: string;
+      roomCode?: string;
+      workspaceId?: string;
+      message: string;
+      user: { id: string; displayName: string; username?: string; avatarUrl?: string };
+      timestamp: string;
+    }) => void,
+  ): () => void {
+    this.chatMessageCallbacks.push(callback);
+    return () => {
+      this.chatMessageCallbacks = this.chatMessageCallbacks.filter((cb) => cb !== callback);
+    };
+  }
+
+  /** Emit file create/update/delete notification to room peers so they auto-sync. */
+  emitFileChanged(
+    roomOrWorkspaceId: string,
+    action: 'create' | 'update' | 'delete' | 'move',
+    fileName?: string,
+  ): void {
+    if (this.socket && this.socket.connected) {
+      this.socket.emit('file-changed', {
+        roomCode: roomOrWorkspaceId,
+        workspaceId: roomOrWorkspaceId,
+        action,
+        fileName,
+      });
+    }
+  }
+
+  /** Register file change event listener for automatic workspace sync without page reload. */
+  onFileChanged(
+    callback: (event: {
+      roomCode?: string;
+      workspaceId?: string;
+      action: string;
+      fileName?: string;
+    }) => void,
+  ): () => void {
+    this.fileChangedCallbacks.push(callback);
+    return () => {
+      this.fileChangedCallbacks = this.fileChangedCallbacks.filter((cb) => cb !== callback);
     };
   }
 
