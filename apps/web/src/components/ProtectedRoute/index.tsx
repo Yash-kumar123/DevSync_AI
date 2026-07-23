@@ -39,8 +39,12 @@ function AuthLoadingScreen() {
       <div className="flex flex-col items-center gap-4">
         {/* Animated brand logo pulse */}
         <div className="relative">
-          <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-brand-500 to-violet-600 shadow-glow-brand animate-pulse" />
-          <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-brand-500 to-violet-600 blur-xl opacity-40 animate-pulse" />
+          <img
+            src="/devsync-icon.png"
+            alt="DevSync AI"
+            className="h-16 w-16 object-contain rounded-2xl shadow-glow-brand animate-pulse"
+          />
+          <div className="absolute inset-0 rounded-2xl bg-brand-500/30 blur-xl opacity-50 animate-pulse -z-10" />
         </div>
         <p className="text-sm font-medium text-slate-400 tracking-wide animate-pulse">
           Loading DevSync AI…

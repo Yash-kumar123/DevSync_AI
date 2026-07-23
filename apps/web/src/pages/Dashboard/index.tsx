@@ -82,22 +82,12 @@ export function DashboardPage() {
       >
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           {/* Logo */}
-          <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-brand-500 to-violet-600 shadow-glow-sm">
-              <svg
-                className="h-4 w-4 text-white"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                <path d="M2 17l10 5 10-5" />
-                <path d="M2 12l10 5 10-5" />
-              </svg>
-            </div>
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <img
+              src="/devsync-icon.png"
+              alt="DevSync AI Logo"
+              className="h-7 w-7 sm:h-8 sm:w-8 object-contain rounded-lg shadow-glow-sm"
+            />
             <span className="text-base font-bold tracking-tight text-white">DevSync AI</span>
           </div>
 

@@ -150,23 +150,13 @@ export function RegisterPage() {
             className="mb-8 flex flex-col items-center gap-3 text-center"
           >
             <div className="relative">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-violet-600 shadow-glow-brand">
-                <svg
-                  className="h-7 w-7 text-white"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                  <path d="M2 17l10 5 10-5" />
-                  <path d="M2 12l10 5 10-5" />
-                </svg>
-              </div>
+              <img
+                src="/devsync-icon.png"
+                alt="DevSync AI Logo"
+                className="h-14 w-14 sm:h-16 sm:w-16 object-contain rounded-2xl shadow-glow-brand"
+              />
               <div
-                className="absolute inset-0 rounded-2xl bg-brand-500/30 blur-xl"
+                className="absolute inset-0 rounded-2xl bg-brand-500/20 blur-xl -z-10"
                 aria-hidden="true"
               />
             </div>

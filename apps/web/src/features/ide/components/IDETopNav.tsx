@@ -6,7 +6,6 @@ import {
   FiSettings,
   FiLogOut,
   FiSidebar,
-  FiCode,
   FiSun,
   FiMoon,
   FiPlay,
@@ -114,12 +113,14 @@ export const IDETopNav: React.FC<IDETopNavProps> = ({ roomCode = 'DEMO-ROOM' }) 
         </button>
 
         <div
-          className="flex items-center gap-2 cursor-pointer"
+          className="flex items-center gap-2.5 cursor-pointer"
           onClick={() => navigate('/dashboard')}
         >
-          <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-glow-sm">
-            <FiCode className="h-4 w-4 text-white" />
-          </div>
+          <img
+            src="/devsync-icon.png"
+            alt="DevSync AI Logo"
+            className="h-7 w-7 object-contain rounded-md shadow-glow-sm"
+          />
           <span className="font-bold text-sm tracking-tight text-white hidden sm:inline">
             DevSync AI
           </span>
