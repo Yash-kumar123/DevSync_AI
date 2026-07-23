@@ -1,0 +1,239 @@
+// =============================================================================
+// DevSync AI — Prisma Schema
+// Database: Supabase PostgreSQL
+// Connection URLs configured via environment variables / prisma.config.ts
+// =============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// =============================================================================
+// Enums
+// =============================================================================
+
+enum UserRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+enum WorkspaceRole {
+  OWNER
+  ADMIN
+  EDITOR
+  VIEWER
+}
+
+// =============================================================================
+// Models
+// =============================================================================
+
+/// Represents an authenticated user in the system.
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  username     String   @unique
+  displayName  String
+  passwordHash String
+  avatarUrl    String?
+  role         UserRole @default(MEMBER)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  refreshTokens    RefreshToken[]
+  ownedWorkspaces  Workspace[]
+  workspaceMembers WorkspaceMember[]
+  sentInvitations  WorkspaceInvitation[]
+  notifications    Notification[]
+  activityLogs     ActivityLog[]
+
+  @@index([email])
+  @@index([username])
+  @@map("users")
+}
+
+/// Stores hashed refresh tokens for multi-device logout.
+model RefreshToken {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@map("refresh_tokens")
+}
+
+/// A collaborative workspace / room.
+model Workspace {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  roomCode    String   @unique
+  ownerId     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  owner       User                  @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  folders     Folder[]
+  files       File[]
+  members     WorkspaceMember[]
+  invitations WorkspaceInvitation[]
+  activities  ActivityLog[]
+  notifications Notification[]
+
+  @@index([ownerId])
+  @@index([roomCode])
+  @@map("workspaces")
+}
+
+/// Represents membership and specific workspace roles.
+model WorkspaceMember {
+  id          String        @id @default(cuid())
+  workspaceId String
+  userId      String
+  role        WorkspaceRole @default(VIEWER)
+  joinedAt    DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, userId])
+  @@index([workspaceId])
+  @@index([userId])
+  @@map("workspace_members")
+}
+
+/// Represents pending / accepted / rejected workspace invitations.
+model WorkspaceInvitation {
+  id          String        @id @default(cuid())
+  workspaceId String
+  email       String
+  role        WorkspaceRole @default(EDITOR)
+  inviterId   String
+  token       String        @unique @default(cuid())
+  status      String        @default("PENDING") // PENDING, ACCEPTED, REJECTED, EXPIRED
+  createdAt   DateTime      @default(now())
+  expiresAt   DateTime
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  inviter   User      @relation(fields: [inviterId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@index([email])
+  @@map("workspace_invitations")
+}
+
+/// User notifications for invitations, role updates, and system events.
+model Notification {
+  id          String   @id @default(cuid())
+  userId      String
+  workspaceId String?
+  type        String   // INVITATION, WORKSPACE_EVENT, MEMBER_JOIN, MEMBER_LEAVE, ROLE_CHANGE
+  title       String
+  message     String
+  payload     String?  // JSON stringified payload
+  read        Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([workspaceId])
+  @@map("notifications")
+}
+
+/// Audit log timeline for workspace activity history.
+model ActivityLog {
+  id          String   @id @default(cuid())
+  workspaceId String
+  userId      String
+  action      String   // USER_JOINED, USER_LEFT, FILE_CREATED, FILE_RENAMED, FILE_DELETED, WORKSPACE_CREATED, WORKSPACE_RENAMED, ROLE_UPDATED, MEMBER_REMOVED, OWNERSHIP_TRANSFERRED
+  details     String?
+  createdAt   DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@index([userId])
+  @@map("activity_logs")
+}
+
+/// System-wide log records for Admin Monitoring & Audit.
+model SystemLog {
+  id        String   @id @default(cuid())
+  timestamp DateTime @default(now())
+  service   String   // AUTHENTICATION, WORKSPACE, AI, TERMINAL, GATEWAY, ERROR
+  level     String   // INFO, WARN, ERROR, DEBUG
+  message   String
+  metadata  String?  // JSON stringified payload
+
+  @@index([service])
+  @@index([level])
+  @@index([timestamp])
+  @@map("system_logs")
+}
+
+/// System telemetry & metrics over time.
+model MetricRecord {
+  id          String   @id @default(cuid())
+  timestamp   DateTime @default(now())
+  metricName  String   // e.g. api_requests, ai_latency, storage_bytes
+  metricValue Float
+  tags        String?
+
+  @@index([metricName])
+  @@index([timestamp])
+  @@map("metric_records")
+}
+
+/// Directory folder inside a workspace.
+model Folder {
+  id          String   @id @default(cuid())
+  workspaceId String
+  parentId    String?
+  name        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  parent    Folder?   @relation("FolderToFolder", fields: [parentId], references: [id], onDelete: Cascade)
+  children  Folder[]  @relation("FolderToFolder")
+  files     File[]
+
+  @@index([workspaceId])
+  @@index([parentId])
+  @@map("folders")
+}
+
+/// Source code file in a workspace.
+model File {
+  id          String   @id @default(cuid())
+  workspaceId String
+  folderId    String?
+  fileName    String
+  extension   String
+  content     String   @default("") @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  folder    Folder?   @relation(fields: [folderId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@index([folderId])
+  @@map("files")
+}

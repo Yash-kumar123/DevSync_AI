@@ -3,7 +3,7 @@
   "ui": "tui",
   "tasks": {
     "build": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["^lint"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": [".next/**", "!.next/cache/**", "dist/**", "build/**"]
     },
@@ -12,11 +12,11 @@
       "persistent": true
     },
     "lint": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["^lint:fix"],
       "outputs": []
     },
     "lint:fix": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["^typecheck"],
       "outputs": [],
       "cache": false
     },
@@ -44,18 +44,13 @@
       "dependsOn": ["^build"],
       "outputs": []
     },
+    "@devsync/ai-service#build": {
+      "outputs": []
+    },
     "clean": {
       "cache": false
     }
   },
-  "globalEnv": [
-    "NODE_ENV",
-    "CI",
-    "TURBO_TOKEN",
-    "TURBO_TEAM",
-    "TURBO_REMOTE_ONLY"
-  ],
-  "globalPassThroughEnv": [
-    "npm_lifecycle_event"
-  ]
+  "globalEnv": ["NODE_ENV", "CI", "TURBO_TOKEN", "TURBO_TEAM", "TURBO_REMOTE_ONLY"],
+  "globalPassThroughEnv": ["npm_lifecycle_event"]
 }

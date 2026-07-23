@@ -1,117 +1,122 @@
-# =============================================================================
-# DevSync AI — Docker Compose
-# Full local development stack
-# =============================================================================
+name: devsync-ai
 
-version: "3.9"
-
-# ---------------------------------------------------------------------------
-# Named volumes — persistent data that survives container restarts
-# ---------------------------------------------------------------------------
-volumes:
-  postgres_data:
-    driver: local
-  redis_data:
-    driver: local
-  minio_data:
-    driver: local
-
-# ---------------------------------------------------------------------------
-# Custom bridge network — all containers share the same DNS namespace
-# ---------------------------------------------------------------------------
-networks:
-  devsync_net:
-    driver: bridge
-
-# ---------------------------------------------------------------------------
-# Services
-# ---------------------------------------------------------------------------
 services:
-
-  # -------------------------------------------------------------------------
-  # PostgreSQL — primary relational database
-  # -------------------------------------------------------------------------
-  postgres:
-    image: postgres:16-alpine
-    container_name: devsync_postgres
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-devsync}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-devsync_secret}
-      POSTGRES_DB: ${POSTGRES_DB:-devsync_db}
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    command: npm run dev --workspace @devsync/web -- --host 0.0.0.0
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - '${WEB_PORT:-3000}:3000'
+    environment:
+      VITE_GATEWAY_HTTP_URL: http://localhost:${GATEWAY_PORT:-4000}
+      VITE_GATEWAY_WS_URL: ws://localhost:${GATEWAY_PORT:-4000}
+      CHOKIDAR_USEPOLLING: 'true'
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./docker/postgres/init:/docker-entrypoint-initdb.d
+      - .:/workspace
+      - web_node_modules:/workspace/node_modules
+    depends_on:
+      gateway:
+        condition: service_healthy
     networks:
-      - devsync_net
+      - devsync_dev
+    restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-devsync}"]
+      test: ['CMD-SHELL', 'wget -q -O /dev/null http://localhost:3000 || exit 1']
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 20s
 
-  # -------------------------------------------------------------------------
-  # Redis — session cache, pub/sub, rate-limiting
-  # -------------------------------------------------------------------------
+  gateway:
+    build:
+      context: .
+      dockerfile: apps/gateway/Dockerfile
+    command: npm run dev --workspace @devsync/gateway
+    ports:
+      - '${GATEWAY_PORT:-4000}:4000'
+    environment:
+      NODE_ENV: development
+      PORT: 4000
+      CORS_ORIGIN: http://localhost:${WEB_PORT:-3000}
+      REDIS_URL: redis://redis:6379
+      AI_SERVICE_URL: http://ai-service:5000
+      CHOKIDAR_USEPOLLING: 'true'
+    volumes:
+      - .:/workspace
+      - gateway_node_modules:/workspace/node_modules
+    depends_on:
+      redis:
+        condition: service_healthy
+      ai-service:
+        condition: service_healthy
+    networks:
+      - devsync_dev
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'node -e "fetch(''http://localhost:4000/api/health'').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  ai-service:
+    build:
+      context: .
+      dockerfile: apps/ai-service/Dockerfile
+    command: uvicorn app.main:app --host 0.0.0.0 --port 5000 --reload
+    ports:
+      - '${AI_SERVICE_PORT:-5000}:5000'
+    environment:
+      ENVIRONMENT: development
+      PORT: 5000
+      CORS_ORIGINS: http://localhost:${WEB_PORT:-3000}
+      LOG_LEVEL: ${AI_LOG_LEVEL:-INFO}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      CHROMA_PERSIST_DIRECTORY: /app/.chroma
+    volumes:
+      - ./apps/ai-service:/app
+      - ai_chroma:/app/.chroma
+    networks:
+      - devsync_dev
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'python -c "import urllib.request; urllib.request.urlopen(''http://localhost:5000/api/health'')"',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
   redis:
     image: redis:7-alpine
-    container_name: devsync_redis
-    restart: unless-stopped
-    command: redis-server --requirepass ${REDIS_PASSWORD:-redis_secret} --save 60 1
+    command: redis-server --appendonly yes
     ports:
-      - "${REDIS_PORT:-6379}:6379"
+      - '${REDIS_PORT:-6379}:6379'
     volumes:
       - redis_data:/data
     networks:
-      - devsync_net
+      - devsync_dev
+    restart: unless-stopped
     healthcheck:
-      test: ["CMD", "redis-cli", "--no-auth-warning", "-a", "${REDIS_PASSWORD:-redis_secret}", "ping"]
+      test: ['CMD', 'redis-cli', 'ping']
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # -------------------------------------------------------------------------
-  # MinIO — S3-compatible object storage (assets, file snapshots)
-  # -------------------------------------------------------------------------
-  minio:
-    image: minio/minio:latest
-    container_name: devsync_minio
-    restart: unless-stopped
-    command: server /data --console-address ":9001"
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin_secret}
-    ports:
-      - "${MINIO_API_PORT:-9000}:9000"
-      - "${MINIO_CONSOLE_PORT:-9001}:9001"
-    volumes:
-      - minio_data:/data
-    networks:
-      - devsync_net
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
+volumes:
+  web_node_modules:
+  gateway_node_modules:
+  ai_chroma:
+  redis_data:
 
-  # -------------------------------------------------------------------------
-  # Traefik — reverse proxy / API gateway (dev mode)
-  # -------------------------------------------------------------------------
-  traefik:
-    image: traefik:v3.0
-    container_name: devsync_traefik
-    restart: unless-stopped
-    command:
-      - "--api.insecure=true"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.web.address=:80"
-    ports:
-      - "80:80"
-      - "8080:8080"   # Traefik dashboard
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    networks:
-      - devsync_net
+networks:
+  devsync_dev:
+    driver: bridge

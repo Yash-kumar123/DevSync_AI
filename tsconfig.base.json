@@ -5,6 +5,15 @@
     "lib": ["ES2022"],
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
+    "baseUrl": ".",
+    "paths": {
+      "@devsync/shared-types": ["packages/shared-types/src/index.ts"],
+      "@devsync/shared-types/*": ["packages/shared-types/src/*"],
+      "@devsync/shared-ui": ["packages/shared-ui/src/index.ts"],
+      "@devsync/shared-ui/*": ["packages/shared-ui/src/*"],
+      "@devsync/shared-config": ["packages/shared-config/index.js"],
+      "@devsync/shared-config/*": ["packages/shared-config/*"]
+    },
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,

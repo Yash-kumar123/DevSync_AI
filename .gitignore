@@ -94,3 +94,5 @@ docker/data/
 .stylelintcache
 *.orig
 *.bak
+*.timestamp-*.mjs
+*.timestamp-*.js

@@ -11,14 +11,21 @@
     ".": {
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
-    }
+    },
+    "./*": {
+      "import": "./dist/*.js",
+      "types": "./dist/*.d.ts"
+    },
+    "./package.json": "./package.json"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "tsc -p tsconfig.json --watch",
-    "lint": "eslint src --ext .ts",
-    "lint:fix": "eslint src --ext .ts --fix",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
     "format": "prettier --write \"src/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.ts\"",
     "typecheck": "tsc --noEmit",
@@ -28,7 +35,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.14.9",
-    "eslint": "^8.57.0",
+    "eslint": "^9.19.0",
     "prettier": "^3.3.2",
     "rimraf": "^5.0.7",
     "typescript": "^5.5.2",
@@ -38,7 +45,9 @@
     "zod": ">=3.23"
   },
   "peerDependenciesMeta": {
-    "zod": { "optional": false }
+    "zod": {
+      "optional": false
+    }
   },
   "dependencies": {
     "zod": "^3.23.8"

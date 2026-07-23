@@ -4,8 +4,13 @@
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src",
-    "composite": true
+    "composite": true,
+    "paths": {
+      "@devsync/shared-types": ["../../packages/shared-types/dist/index.d.ts"],
+      "@devsync/shared-types/*": ["../../packages/shared-types/dist/*"]
+    }
   },
+  "references": [{ "path": "../../packages/shared-types" }],
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

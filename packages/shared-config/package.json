@@ -8,18 +8,14 @@
   "exports": {
     ".": "./index.js",
     "./eslint/base": "./eslint/base.js",
-    "./eslint/next": "./eslint/next.js",
     "./eslint/node": "./eslint/node.js",
     "./prettier": "./prettier/index.js",
-    "./jest/base": "./jest/base.js",
-    "./vitest/base": "./vitest/base.js"
+    "./package.json": "./package.json"
   },
   "files": [
     "index.js",
     "eslint/",
-    "prettier/",
-    "jest/",
-    "vitest/"
+    "prettier/"
   ],
   "scripts": {
     "lint": "echo 'No linting for config package'",
@@ -28,13 +24,12 @@
     "clean": "echo 'Nothing to clean'"
   },
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^7.14.1",
-    "@typescript-eslint/parser": "^7.14.1",
-    "eslint": "^8.57.0",
-    "eslint-config-next": "^14.2.5",
+    "@typescript-eslint/eslint-plugin": "^8.22.0",
+    "@typescript-eslint/parser": "^8.22.0",
+    "eslint": "^9.19.0",
     "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-react": "^7.34.3",
-    "eslint-plugin-react-hooks": "^4.6.2",
+    "eslint-plugin-react-hooks": "^5.2.0",
     "prettier": "^3.3.2"
   }
 }

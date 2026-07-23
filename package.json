@@ -30,29 +30,33 @@
     "changeset": "changeset",
     "version-packages": "changeset version",
     "release": "turbo run build --filter=./packages/* && changeset publish",
-    "docker:up": "docker-compose up -d",
-    "docker:down": "docker-compose down",
-    "docker:logs": "docker-compose logs -f",
-    "docker:build": "docker-compose build",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f",
+    "docker:build": "docker compose build",
     "prepare": "node -e \"if(process.env.CI !== 'true' && require('fs').existsSync('.git')) { require('child_process').execSync('husky install', {stdio:'inherit'}) }\""
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.1",
+    "@eslint/js": "^9.19.0",
     "@commitlint/cli": "^19.3.0",
     "@commitlint/config-conventional": "^19.2.2",
+    "eslint": "^9.19.0",
+    "globals": "^15.14.0",
     "husky": "^9.0.11",
     "lint-staged": "^15.2.2",
     "prettier": "^3.3.2",
     "rimraf": "^5.0.7",
     "turbo": "^2.0.6",
-    "typescript": "^5.5.2"
+    "typescript": "^5.5.2",
+    "typescript-eslint": "^8.22.0"
   },
   "lint-staged": {
-    "*.{ts,tsx,js,jsx}": [
+    "*.{ts,tsx,js,jsx,mjs,cjs}": [
       "eslint --fix",
       "prettier --write"
     ],
-    "*.{json,md,yaml,yml}": [
+    "*.{json,md,yaml,yml,css}": [
       "prettier --write"
     ]
   },
