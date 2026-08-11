@@ -36,6 +36,7 @@ export function LoginPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSlowWakeup, setIsSlowWakeup] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
 
   // ── Client-side validation ────────────────────────────────────────────────
@@ -55,12 +56,17 @@ export function LoginPage() {
     if (!validate()) return;
 
     setIsLoading(true);
+    setIsSlowWakeup(false);
+    const slowTimer = setTimeout(() => setIsSlowWakeup(true), 3500);
+
     try {
       await login({ email, password });
     } catch {
       // Error toast is already shown by AuthContext
     } finally {
+      clearTimeout(slowTimer);
       setIsLoading(false);
+      setIsSlowWakeup(false);
     }
   }
 
@@ -217,6 +223,36 @@ export function LoginPage() {
             >
               {isLoading ? 'Signing in…' : 'Sign in'}
             </Button>
+
+            {isLoading && isSlowWakeup && (
+              <motion.p
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-center text-xs font-medium text-amber-400 flex items-center justify-center gap-2 mt-1.5 p-2 rounded-lg bg-amber-500/10 border border-amber-500/20"
+              >
+                <svg
+                  className="h-3.5 w-3.5 animate-spin text-amber-400 shrink-0"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                  />
+                </svg>
+                Backend server is waking up on Render. Please wait...
+              </motion.p>
+            )}
           </motion.form>
 
           {/* Divider */}

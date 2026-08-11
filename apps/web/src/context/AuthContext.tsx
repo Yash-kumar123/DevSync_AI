@@ -124,6 +124,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 /** Extract a human-readable error message from an Axios or unknown error. */
 function extractErrorMessage(error: unknown, fallback: string): string {
   if (axios.isAxiosError(error)) {
+    if (error.code === 'ECONNABORTED' || error.message?.toLowerCase().includes('timeout')) {
+      return 'Server wake-up timed out. The backend on Render is taking longer than expected to start up — please try again in a few seconds.';
+    }
+    if (error.code === 'ERR_NETWORK' || (!error.response && !error.status)) {
+      return 'Unable to reach backend server. The Render backend may be waking up — please wait a few seconds and try again.';
+    }
     const data = error.response?.data as
       { error?: { message?: string }; message?: string } | undefined;
     return data?.error?.message ?? data?.message ?? fallback;

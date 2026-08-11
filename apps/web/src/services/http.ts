@@ -23,6 +23,7 @@ const BASE_URL = getApiBaseUrl();
 
 export const http: AxiosInstance = axios.create({
   baseURL: BASE_URL,
+  timeout: 120000, // 120s (2 min) timeout to accommodate Render free tier cold starts (wake-up takes 60-90s)
   withCredentials: true, // Send cookies (refresh token) on every request
   headers: {
     'Content-Type': 'application/json',

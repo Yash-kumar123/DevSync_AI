@@ -6,6 +6,10 @@ import { createSocketServer } from './socket/index.js';
 const app = createApp();
 const httpServer = createServer(app);
 
+// Extend HTTP server timeouts (120 seconds) to handle Render cold starts and initial DB connections
+httpServer.requestTimeout = 120000;
+httpServer.headersTimeout = 120000;
+
 createSocketServer(httpServer);
 
 httpServer.listen(env.port, () => {
