@@ -1,8 +1,9 @@
 import json
 import logging
+
 from app.agents.state import AgentState
-from app.services.ollama_service import ollama_service
 from app.schemas.chat_schema import ChatRequest
+from app.services.ollama_service import ollama_service
 
 logger = logging.getLogger(__name__)
 
@@ -37,9 +38,9 @@ async def builder_node(state: AgentState) -> dict[str, str]:
                     data = json.loads(raw)
                     if "content" in data:
                         builder_output_chunks.append(data["content"])
-                except Exception:
-                    pass
-    except Exception as e:
+                except (json.JSONDecodeError, KeyError) as parse_err:
+                    logger.debug("Failed parsing chunk: %s", parse_err)
+    except Exception as e:  # noqa: BLE001
         logger.error("Builder agent error: %s", str(e))
 
     builder_output = "".join(builder_output_chunks)

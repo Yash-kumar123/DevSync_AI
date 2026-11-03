@@ -1,6 +1,6 @@
+import logging
 import math
 import re
-import logging
 
 logger = logging.getLogger(__name__)
 

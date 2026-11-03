@@ -1,7 +1,9 @@
-import os
 import logging
+import os
+
 import chromadb
 from chromadb.config import Settings as ChromaSettings
+
 from app.config import get_settings
 from app.parsers.code_parser import CodeChunk
 from app.schemas.rag_schema import RetrievedChunk
@@ -90,7 +92,7 @@ class ChromaVectorStore:
                 )
 
             return retrieved
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error("ChromaDB query error for workspace %s: %s", workspace_id, str(e))
             return []
 
@@ -99,15 +101,18 @@ class ChromaVectorStore:
             collection = self.get_or_create_collection(workspace_id)
             count = collection.count()
             return {"total_chunks": count}
-        except Exception:
+        except Exception as e:  # noqa: BLE001
+            logger.warning("Failed to get ChromaDB stats for workspace %s: %s", workspace_id, e)
             return {"total_chunks": 0}
 
     def clear_workspace(self, workspace_id: str) -> None:
         try:
             collection_name = self._get_collection_name(workspace_id)
             self.client.delete_collection(name=collection_name)
-        except Exception:
-            pass
+        except Exception as e:  # noqa: BLE001
+            logger.debug(
+                "Workspace collection %s already cleared or not found: %s", collection_name, e
+            )
 
 
 chroma_store = ChromaVectorStore()

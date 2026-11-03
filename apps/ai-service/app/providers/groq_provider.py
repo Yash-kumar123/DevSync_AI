@@ -1,11 +1,12 @@
 import json
 import logging
 from collections.abc import AsyncGenerator
+
 import httpx
 
 from app.config import get_settings
+from app.providers.base import SYSTEM_PROMPT, BaseAIProvider
 from app.schemas.chat_schema import ChatRequest
-from app.providers.base import BaseAIProvider, SYSTEM_PROMPT
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -100,45 +101,43 @@ class GroqProvider(BaseAIProvider):
         http_timeout = httpx.Timeout(60.0, connect=5.0)
 
         try:
-            async with httpx.AsyncClient(timeout=http_timeout) as client:
-                async with client.stream(
-                    "POST", self.base_url, headers=headers, json=payload
-                ) as response:
-                    if response.status_code != 200:
-                        error_body = await response.aread()
-                        detail = error_body.decode("utf-8", errors="ignore")
-                        err_code, err_msg = self._map_http_error(response.status_code, detail)
-                        logger.error("Groq API [%s]: %s", err_code, err_msg)
+            async with (
+                httpx.AsyncClient(timeout=http_timeout) as client,
+                client.stream("POST", self.base_url, headers=headers, json=payload) as response,
+            ):
+                if response.status_code != 200:
+                    error_body = await response.aread()
+                    detail = error_body.decode("utf-8", errors="ignore")
+                    err_code, err_msg = self._map_http_error(response.status_code, detail)
+                    logger.error("Groq API [%s]: %s", err_code, err_msg)
 
-                        yield f"data: {json.dumps({'content': f'⚠️ **AI Service Error ({err_code})**: {err_msg}', 'done': True})}\n\n"
+                    yield f"data: {json.dumps({'content': f'⚠️ **AI Service Error ({err_code})**: {err_msg}', 'done': True})}\n\n"
+                    yield "data: [DONE]\n\n"
+                    return
+
+                async for line in response.aiter_lines():
+                    if not line:
+                        continue
+                    line_str = line.strip()
+                    if not line_str.startswith("data:"):
+                        continue
+
+                    data_str = line_str[5:].strip()
+                    if data_str == "[DONE]":
                         yield "data: [DONE]\n\n"
                         return
 
-                    async for line in response.aiter_lines():
-                        if not line:
-                            continue
-                        line_str = line.strip()
-                        if not line_str.startswith("data:"):
-                            continue
-
-                        data_str = line_str[5:].strip()
-                        if data_str == "[DONE]":
-                            yield "data: [DONE]\n\n"
-                            return
-
-                        try:
-                            data = json.loads(data_str)
-                            choices = data.get("choices", [])
-                            if choices:
-                                delta = choices[0].get("delta", {})
-                                content_chunk = delta.get("content", "")
-                                if content_chunk:
-                                    safe_chunk = json.dumps(
-                                        {"content": content_chunk, "done": False}
-                                    )
-                                    yield f"data: {safe_chunk}\n\n"
-                        except json.JSONDecodeError:
-                            continue
+                    try:
+                        data = json.loads(data_str)
+                        choices = data.get("choices", [])
+                        if choices:
+                            delta = choices[0].get("delta", {})
+                            content_chunk = delta.get("content", "")
+                            if content_chunk:
+                                safe_chunk = json.dumps({"content": content_chunk, "done": False})
+                                yield f"data: {safe_chunk}\n\n"
+                    except json.JSONDecodeError:
+                        continue
 
             yield "data: [DONE]\n\n"
 
@@ -153,14 +152,14 @@ class GroqProvider(BaseAIProvider):
         except (httpx.ConnectError, httpx.NetworkError) as net_err:
             err_code, err_msg = (
                 "NETWORK_FAILURE",
-                f"Network failure connecting to Groq API: {str(net_err)}",
+                f"Network failure connecting to Groq API: {net_err!s}",
             )
             logger.error("Groq API [%s]: %s", err_code, err_msg)
             yield f"data: {json.dumps({'content': f'⚠️ **AI Service Error ({err_code})**: {err_msg}', 'done': True})}\n\n"
             yield "data: [DONE]\n\n"
         except Exception as e:
             logger.exception("Unexpected error in GroqProvider.stream_chat")
-            yield f"data: {json.dumps({'content': f'⚠️ **AI Service Error**: {str(e)}', 'done': True})}\n\n"
+            yield f"data: {json.dumps({'content': f'⚠️ **AI Service Error**: {e!s}', 'done': True})}\n\n"
             yield "data: [DONE]\n\n"
 
     async def chat(self, request: ChatRequest) -> str:
@@ -198,5 +197,5 @@ class GroqProvider(BaseAIProvider):
                 if choices:
                     return choices[0].get("message", {}).get("content", "")
                 return ""
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return self._format_error("NETWORK_FAILURE", str(e))

@@ -1,5 +1,5 @@
-import os
 import logging
+import os
 from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
@@ -78,7 +78,7 @@ class CodeParser:
                     chunks = self.chunk_file(rel_path, lines)
                     all_chunks.extend(chunks)
                     file_count += 1
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     logger.warning("Failed to parse file %s: %s", rel_path, str(e))
 
         logger.info("Parsed %d files into %d semantic code chunks", file_count, len(all_chunks))

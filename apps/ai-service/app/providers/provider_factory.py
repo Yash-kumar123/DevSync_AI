@@ -1,4 +1,6 @@
 import logging
+from typing import ClassVar
+
 from app.config import get_settings
 from app.providers.base import BaseAIProvider
 from app.providers.groq_provider import GroqProvider
@@ -8,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class ProviderFactory:
-    _instances: dict[str, BaseAIProvider] = {}
+    _instances: ClassVar[dict[str, BaseAIProvider]] = {}
 
     @classmethod
     def get_provider(cls, provider_type: str | None = None) -> BaseAIProvider:

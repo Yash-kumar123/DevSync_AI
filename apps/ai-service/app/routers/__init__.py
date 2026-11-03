@@ -1,9 +1,9 @@
 from fastapi import APIRouter
 
-from .health import router as health_router
 from .chat_router import router as chat_router
-from .rag_router import router as rag_router
+from .health import router as health_router
 from .multi_agent_router import router as multi_agent_router
+from .rag_router import router as rag_router
 
 api_router = APIRouter()
 api_router.include_router(health_router, tags=["health"])

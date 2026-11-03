@@ -1,11 +1,12 @@
 import json
 import logging
 from collections.abc import AsyncGenerator
+
 import httpx
 
 from app.config import get_settings
+from app.providers.base import SYSTEM_PROMPT, BaseAIProvider
 from app.schemas.chat_schema import ChatRequest
-from app.providers.base import BaseAIProvider, SYSTEM_PROMPT
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -104,110 +105,110 @@ class OllamaProvider(BaseAIProvider):
 
         for url in target_urls:
             try:
-                async with httpx.AsyncClient(timeout=http_timeout) as client:
-                    async with client.stream("POST", url, json=payload) as response:
-                        if response.status_code == 404:
-                            try:
-                                tags_url = url.replace("/api/chat", "/api/tags")
-                                tags_resp = await client.get(tags_url, timeout=3.0)
-                                if tags_resp.status_code == 200:
-                                    models_data = tags_resp.json().get("models", [])
-                                    installed_models = [
-                                        m.get("name") for m in models_data if m.get("name")
-                                    ]
-                                    if installed_models:
-                                        fallback_model = installed_models[0]
-                                        logger.info(
-                                            "Model '%s' not found in Ollama, falling back to '%s'",
-                                            model,
-                                            fallback_model,
-                                        )
-                                        payload["model"] = fallback_model
-                                        async with client.stream(
-                                            "POST", url, json=payload
-                                        ) as fb_response:
-                                            if fb_response.status_code == 200:
-                                                async for line in fb_response.aiter_lines():
-                                                    if not line:
-                                                        continue
-                                                    try:
-                                                        data = json.loads(line)
-                                                        message = data.get("message", {})
-                                                        content_chunk = message.get("content", "")
-                                                        done = data.get("done", False)
-
-                                                        if content_chunk:
-                                                            safe_chunk = json.dumps(
-                                                                {
-                                                                    "content": content_chunk,
-                                                                    "done": done,
-                                                                }
-                                                            )
-                                                            yield f"data: {safe_chunk}\n\n"
-
-                                                        if done:
-                                                            yield "data: [DONE]\n\n"
-                                                            return
-                                                    except json.JSONDecodeError:
-                                                        continue
-                                                yield "data: [DONE]\n\n"
-                                                return
-                            except Exception as tag_err:
-                                logger.warning("Failed to fetch Ollama tags: %s", tag_err)
-
-                            help_text = (
-                                f"I am **DevSync AI Assistant**.\n\n"
-                                f"The model **`{model}`** is not currently downloaded in your local Ollama instance.\n\n"
-                                f"### 💡 How to pull the model:\n"
-                                f"Open your terminal and run:\n"
-                                f"```bash\n"
-                                f"ollama pull {model}\n"
-                                f"```\n\n"
-                                f"Here is guidance for your request:\n\n"
-                                f"**Prompt**: `{request.prompt}`\n"
-                            )
-
-                            for word in help_text.split(" "):
-                                chunk = json.dumps({"content": word + " ", "done": False})
-                                yield f"data: {chunk}\n\n"
-                            yield "data: [DONE]\n\n"
-                            return
-
-                        elif response.status_code != 200:
-                            error_detail = await response.aread()
-                            logger.error("Ollama error %s: %s", response.status_code, error_detail)
-                            err_msg = json.dumps(
-                                {
-                                    "content": f"AI Service error ({response.status_code}): {error_detail.decode('utf-8', errors='ignore')}",
-                                    "done": True,
-                                }
-                            )
-                            yield f"data: {err_msg}\n\n"
-                            yield "data: [DONE]\n\n"
-                            return
-
-                        async for line in response.aiter_lines():
-                            if not line:
-                                continue
-                            try:
-                                data = json.loads(line)
-                                message = data.get("message", {})
-                                content_chunk = message.get("content", "")
-                                done = data.get("done", False)
-
-                                if content_chunk:
-                                    safe_chunk = json.dumps(
-                                        {"content": content_chunk, "done": done}
+                async with (
+                    httpx.AsyncClient(timeout=http_timeout) as client,
+                    client.stream("POST", url, json=payload) as response,
+                ):
+                    if response.status_code == 404:
+                        try:
+                            tags_url = url.replace("/api/chat", "/api/tags")
+                            tags_resp = await client.get(tags_url, timeout=3.0)
+                            if tags_resp.status_code == 200:
+                                models_data = tags_resp.json().get("models", [])
+                                installed_models = [
+                                    m.get("name") for m in models_data if m.get("name")
+                                ]
+                                if installed_models:
+                                    fallback_model = installed_models[0]
+                                    logger.info(
+                                        "Model '%s' not found in Ollama, falling back to '%s'",
+                                        model,
+                                        fallback_model,
                                     )
-                                    yield f"data: {safe_chunk}\n\n"
+                                    payload["model"] = fallback_model
+                                    async with client.stream(
+                                        "POST", url, json=payload
+                                    ) as fb_response:
+                                        if fb_response.status_code == 200:
+                                            async for line in fb_response.aiter_lines():
+                                                if not line:
+                                                    continue
+                                                try:
+                                                    data = json.loads(line)
+                                                    message = data.get("message", {})
+                                                    content_chunk = message.get("content", "")
+                                                    done = data.get("done", False)
 
-                                if done:
-                                    yield "data: [DONE]\n\n"
-                                    return
-                            except json.JSONDecodeError:
-                                continue
+                                                    if content_chunk:
+                                                        safe_chunk = json.dumps(
+                                                            {
+                                                                "content": content_chunk,
+                                                                "done": done,
+                                                            }
+                                                        )
+                                                        yield f"data: {safe_chunk}\n\n"
+
+                                                    if done:
+                                                        yield "data: [DONE]\n\n"
+                                                        return
+                                                except json.JSONDecodeError:
+                                                    continue
+                                            yield "data: [DONE]\n\n"
+                                            return
+                        except Exception as tag_err:  # noqa: BLE001
+                            logger.warning("Failed to fetch Ollama tags: %s", tag_err)
+
+                        help_text = (
+                            f"I am **DevSync AI Assistant**.\n\n"
+                            f"The model **`{model}`** is not currently downloaded in your local Ollama instance.\n\n"
+                            f"### 💡 How to pull the model:\n"
+                            f"Open your terminal and run:\n"
+                            f"```bash\n"
+                            f"ollama pull {model}\n"
+                            f"```\n\n"
+                            f"Here is guidance for your request:\n\n"
+                            f"**Prompt**: `{request.prompt}`\n"
+                        )
+
+                        for word in help_text.split(" "):
+                            chunk = json.dumps({"content": word + " ", "done": False})
+                            yield f"data: {chunk}\n\n"
                         yield "data: [DONE]\n\n"
                         return
+
+                    elif response.status_code != 200:
+                        error_detail = await response.aread()
+                        logger.error("Ollama error %s: %s", response.status_code, error_detail)
+                        err_msg = json.dumps(
+                            {
+                                "content": f"AI Service error ({response.status_code}): {error_detail.decode('utf-8', errors='ignore')}",
+                                "done": True,
+                            }
+                        )
+                        yield f"data: {err_msg}\n\n"
+                        yield "data: [DONE]\n\n"
+                        return
+
+                    async for line in response.aiter_lines():
+                        if not line:
+                            continue
+                        try:
+                            data = json.loads(line)
+                            message = data.get("message", {})
+                            content_chunk = message.get("content", "")
+                            done = data.get("done", False)
+
+                            if content_chunk:
+                                safe_chunk = json.dumps({"content": content_chunk, "done": done})
+                                yield f"data: {safe_chunk}\n\n"
+
+                            if done:
+                                yield "data: [DONE]\n\n"
+                                return
+                        except json.JSONDecodeError:
+                            continue
+                    yield "data: [DONE]\n\n"
+                    return
 
             except (httpx.ConnectError, httpx.ConnectTimeout):
                 logger.warning("Ollama endpoint %s unreachable.", url)
@@ -220,7 +221,7 @@ class OllamaProvider(BaseAIProvider):
                     yield f"data: {chunk}\n\n"
                 yield "data: [DONE]\n\n"
                 return
-            except Exception as e:
+            except Exception:
                 logger.exception("Unexpected error connecting to Ollama at %s", url)
                 continue
 
@@ -252,5 +253,5 @@ class OllamaProvider(BaseAIProvider):
                     data = resp.json()
                     return data.get("message", {}).get("content", "")
                 return self._generate_fallback_text(request, model, is_timeout=False)
-        except Exception:
+        except Exception:  # noqa: BLE001
             return self._generate_fallback_text(request, model, is_timeout=False)

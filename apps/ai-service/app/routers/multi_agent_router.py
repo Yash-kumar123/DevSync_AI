@@ -1,12 +1,13 @@
 import json
 import logging
 from collections.abc import AsyncGenerator
+
 from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import StreamingResponse
 
-from app.schemas.multi_agent_schema import MultiAgentRequest
 from app.agents.graph import multi_agent_graph
 from app.agents.state import AgentState
+from app.schemas.multi_agent_schema import MultiAgentRequest
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +64,7 @@ async def stream_multi_agent_pipeline(request: MultiAgentRequest) -> AsyncGenera
 
     except Exception as e:
         logger.exception("Error in multi-agent pipeline")
-        err_msg = json.dumps({"content": f"Multi-Agent error: {str(e)}", "done": True})
+        err_msg = json.dumps({"content": f"Multi-Agent error: {e!s}", "done": True})
         yield f"data: {err_msg}\n\n"
         yield "data: [DONE]\n\n"
 

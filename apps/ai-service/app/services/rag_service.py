@@ -2,16 +2,16 @@ import json
 import logging
 from collections.abc import AsyncGenerator
 
-from app.utils.git_cloner import unpack_zip_bytes, clone_git_repo, get_workspace_dir
-from app.parsers.code_parser import code_parser
 from app.embeddings.embedding_service import embedding_service
-from app.vectorstore.chroma_store import chroma_store
-from app.services.ollama_service import ollama_service
+from app.parsers.code_parser import code_parser
 from app.schemas.rag_schema import (
-    RAGStatusResponse,
     RAGQueryRequest,
     RAGQueryResultResponse,
+    RAGStatusResponse,
 )
+from app.services.ollama_service import ollama_service
+from app.utils.git_cloner import clone_git_repo, get_workspace_dir, unpack_zip_bytes
+from app.vectorstore.chroma_store import chroma_store
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +67,7 @@ class RAGService:
 
             # 2. Parse files into semantic chunks
             chunks = code_parser.parse_directory(target_dir)
-            unique_files = len(set(c.file_path for c in chunks))
+            unique_files = len({c.file_path for c in chunks})
 
             workspace_status_store[workspace_id].progress = 0.6
             workspace_status_store[
@@ -108,7 +108,7 @@ class RAGService:
                 total_chunks=0,
                 db_status="Error",
                 progress=0.0,
-                status_message=f"Indexing failed: {str(e)}",
+                status_message=f"Indexing failed: {e!s}",
             )
             workspace_status_store[workspace_id] = err_res
             return err_res

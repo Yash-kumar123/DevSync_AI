@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from collections.abc import AsyncGenerator
+
 from app.schemas.chat_schema import ChatRequest
 
 SYSTEM_PROMPT = (
@@ -14,17 +15,14 @@ class BaseAIProvider(ABC):
     @abstractmethod
     def provider_name(self) -> str:
         """Returns the identifier name of the AI provider (e.g. 'groq', 'ollama')."""
-        pass
 
     @abstractmethod
     async def stream_chat(self, request: ChatRequest) -> AsyncGenerator[str, None]:
         """Streams AI chat response as SSE formatted strings."""
-        pass
 
     @abstractmethod
     async def chat(self, request: ChatRequest) -> str:
         """Executes a non-streaming completion and returns text response."""
-        pass
 
     async def embeddings(self, text: str) -> list[float]:
         """Optional embeddings generator for future provider extension."""

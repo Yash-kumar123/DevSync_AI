@@ -1,9 +1,9 @@
+import logging
 import os
 import shutil
+import subprocess
 import tempfile
 import zipfile
-import subprocess
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +47,6 @@ def clone_git_repo(git_url: str, workspace_id: str) -> str:
     subprocess.run(
         ["git", "clone", "--depth", "1", git_url, target_dir],
         check=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        capture_output=True,
     )
     return target_dir

@@ -1,6 +1,7 @@
 import logging
 from typing import Annotated
-from fastapi import APIRouter, File, UploadFile, Form, HTTPException, status
+
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
 from fastapi.responses import StreamingResponse
 
 from app.schemas.rag_schema import (

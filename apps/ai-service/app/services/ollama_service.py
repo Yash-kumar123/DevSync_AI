@@ -1,8 +1,8 @@
 import logging
 from collections.abc import AsyncGenerator
 
-from app.schemas.chat_schema import ChatRequest
 from app.providers.provider_factory import get_ai_provider
+from app.schemas.chat_schema import ChatRequest
 
 logger = logging.getLogger(__name__)
 
