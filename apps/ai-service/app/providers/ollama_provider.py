@@ -18,9 +18,13 @@ class OllamaProvider(BaseAIProvider):
 
     def __init__(self) -> None:
         self.base_url = settings.ollama_base_url
-        self.default_model = getattr(settings, "ollama_model", "qwen2.5-coder:7b") or "qwen2.5-coder:7b"
+        self.default_model = (
+            getattr(settings, "ollama_model", "qwen2.5-coder:7b") or "qwen2.5-coder:7b"
+        )
 
-    def _generate_fallback_text(self, request: ChatRequest, model: str, is_timeout: bool = False) -> str:
+    def _generate_fallback_text(
+        self, request: ChatRequest, model: str, is_timeout: bool = False
+    ) -> str:
         prompt_lower = request.prompt.lower()
 
         status_note = (
@@ -39,13 +43,13 @@ class OllamaProvider(BaseAIProvider):
                 "#include <stdlib.h>\n\n"
                 "// Function to display number in 32-bit binary format\n"
                 "void print_binary(unsigned int n) {\n"
-                "    printf(\"Binary of %u: \", n);\n"
+                '    printf("Binary of %u: ", n);\n'
                 "    for (int i = 31; i >= 0; i--) {\n"
                 "        int bit = (n >> i) & 1;\n"
-                "        printf(\"%d\", bit);\n"
-                "        if (i % 4 == 0) printf(\" \"); // space every 4 bits\n"
+                '        printf("%d", bit);\n'
+                '        if (i % 4 == 0) printf(" "); // space every 4 bits\n'
                 "    }\n"
-                "    printf(\"\\n\");\n"
+                '    printf("\\n");\n'
                 "}\n\n"
                 "int main() {\n"
                 "    unsigned int number = 42;\n"
@@ -55,9 +59,7 @@ class OllamaProvider(BaseAIProvider):
                 "```"
             )
         elif "hello" in prompt_lower or "hi" in prompt_lower or "hey" in prompt_lower:
-            guidance = (
-                "Hello! 👋 I am your **DevSync AI Pair Programmer**. How can I help you write, debug, or refactor code today?"
-            )
+            guidance = "Hello! 👋 I am your **DevSync AI Pair Programmer**. How can I help you write, debug, or refactor code today?"
         else:
             guidance = (
                 f"Here is code guidance for your request:\n\n"
@@ -110,7 +112,9 @@ class OllamaProvider(BaseAIProvider):
                                 tags_resp = await client.get(tags_url, timeout=3.0)
                                 if tags_resp.status_code == 200:
                                     models_data = tags_resp.json().get("models", [])
-                                    installed_models = [m.get("name") for m in models_data if m.get("name")]
+                                    installed_models = [
+                                        m.get("name") for m in models_data if m.get("name")
+                                    ]
                                     if installed_models:
                                         fallback_model = installed_models[0]
                                         logger.info(
@@ -119,7 +123,9 @@ class OllamaProvider(BaseAIProvider):
                                             fallback_model,
                                         )
                                         payload["model"] = fallback_model
-                                        async with client.stream("POST", url, json=payload) as fb_response:
+                                        async with client.stream(
+                                            "POST", url, json=payload
+                                        ) as fb_response:
                                             if fb_response.status_code == 200:
                                                 async for line in fb_response.aiter_lines():
                                                     if not line:
@@ -132,7 +138,10 @@ class OllamaProvider(BaseAIProvider):
 
                                                         if content_chunk:
                                                             safe_chunk = json.dumps(
-                                                                {"content": content_chunk, "done": done}
+                                                                {
+                                                                    "content": content_chunk,
+                                                                    "done": done,
+                                                                }
                                                             )
                                                             yield f"data: {safe_chunk}\n\n"
 
@@ -187,7 +196,9 @@ class OllamaProvider(BaseAIProvider):
                                 done = data.get("done", False)
 
                                 if content_chunk:
-                                    safe_chunk = json.dumps({"content": content_chunk, "done": done})
+                                    safe_chunk = json.dumps(
+                                        {"content": content_chunk, "done": done}
+                                    )
                                     yield f"data: {safe_chunk}\n\n"
 
                                 if done:

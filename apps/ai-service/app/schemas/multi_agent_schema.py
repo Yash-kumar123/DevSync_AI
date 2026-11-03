@@ -2,8 +2,12 @@ from pydantic import BaseModel, Field
 
 
 class MultiAgentRequest(BaseModel):
-    prompt: str = Field(..., min_length=1, description="User prompt or task for multi-agent pipeline")
-    workspace_id: str = Field(default="default-workspace", description="Workspace ID for RAG context retrieval")
+    prompt: str = Field(
+        ..., min_length=1, description="User prompt or task for multi-agent pipeline"
+    )
+    workspace_id: str = Field(
+        default="default-workspace", description="Workspace ID for RAG context retrieval"
+    )
     model: str | None = Field(default="qwen2.5-coder", description="Ollama model name")
 
 

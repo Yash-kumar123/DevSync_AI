@@ -29,16 +29,22 @@ class GroqProvider(BaseAIProvider):
         return messages
 
     def _format_error(self, error_code: str, message: str) -> str:
-        return json.dumps({
-            "success": False,
-            "provider": self.provider_name,
-            "error": error_code,
-            "message": message,
-        })
+        return json.dumps(
+            {
+                "success": False,
+                "provider": self.provider_name,
+                "error": error_code,
+                "message": message,
+            }
+        )
 
     def _map_http_error(self, status_code: int, detail: str) -> tuple[str, str]:
         detail_lower = detail.lower()
-        if status_code == 401 or "invalid_api_key" in detail_lower or "unauthorized" in detail_lower:
+        if (
+            status_code == 401
+            or "invalid_api_key" in detail_lower
+            or "unauthorized" in detail_lower
+        ):
             return (
                 "INVALID_API_KEY",
                 "Invalid or missing Groq API Key. Please verify your GROQ_API_KEY in environment settings.",
@@ -95,7 +101,9 @@ class GroqProvider(BaseAIProvider):
 
         try:
             async with httpx.AsyncClient(timeout=http_timeout) as client:
-                async with client.stream("POST", self.base_url, headers=headers, json=payload) as response:
+                async with client.stream(
+                    "POST", self.base_url, headers=headers, json=payload
+                ) as response:
                     if response.status_code != 200:
                         error_body = await response.aread()
                         detail = error_body.decode("utf-8", errors="ignore")
@@ -125,7 +133,9 @@ class GroqProvider(BaseAIProvider):
                                 delta = choices[0].get("delta", {})
                                 content_chunk = delta.get("content", "")
                                 if content_chunk:
-                                    safe_chunk = json.dumps({"content": content_chunk, "done": False})
+                                    safe_chunk = json.dumps(
+                                        {"content": content_chunk, "done": False}
+                                    )
                                     yield f"data: {safe_chunk}\n\n"
                         except json.JSONDecodeError:
                             continue
@@ -141,7 +151,10 @@ class GroqProvider(BaseAIProvider):
             yield f"data: {json.dumps({'content': f'⚠️ **AI Service Error ({err_code})**: {err_msg}', 'done': True})}\n\n"
             yield "data: [DONE]\n\n"
         except (httpx.ConnectError, httpx.NetworkError) as net_err:
-            err_code, err_msg = "NETWORK_FAILURE", f"Network failure connecting to Groq API: {str(net_err)}"
+            err_code, err_msg = (
+                "NETWORK_FAILURE",
+                f"Network failure connecting to Groq API: {str(net_err)}",
+            )
             logger.error("Groq API [%s]: %s", err_code, err_msg)
             yield f"data: {json.dumps({'content': f'⚠️ **AI Service Error ({err_code})**: {err_msg}', 'done': True})}\n\n"
             yield "data: [DONE]\n\n"

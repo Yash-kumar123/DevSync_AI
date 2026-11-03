@@ -35,7 +35,9 @@ class RAGService:
             total_chunks=total_chunks,
             db_status="Ready" if is_indexed else "Empty",
             progress=1.0 if is_indexed else 0.0,
-            status_message="Codebase vector index is ready" if is_indexed else "No codebase indexed",
+            status_message="Codebase vector index is ready"
+            if is_indexed
+            else "No codebase indexed",
         )
 
     def ingest_project(
@@ -68,16 +70,18 @@ class RAGService:
             unique_files = len(set(c.file_path for c in chunks))
 
             workspace_status_store[workspace_id].progress = 0.6
-            workspace_status_store[workspace_id].status_message = (
-                f"Generating embeddings for {len(chunks)} code chunks..."
-            )
+            workspace_status_store[
+                workspace_id
+            ].status_message = f"Generating embeddings for {len(chunks)} code chunks..."
 
             # 3. Generate embeddings
             texts = [c.code_snippet for c in chunks]
             embeddings = embedding_service.embed_texts(texts)
 
             workspace_status_store[workspace_id].progress = 0.8
-            workspace_status_store[workspace_id].status_message = "Storing embeddings in ChromaDB..."
+            workspace_status_store[
+                workspace_id
+            ].status_message = "Storing embeddings in ChromaDB..."
 
             # 4. Save to ChromaDB
             chroma_store.clear_workspace(workspace_id)

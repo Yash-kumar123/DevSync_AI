@@ -22,7 +22,9 @@ async def retrieve_context_node(state: AgentState) -> dict[str, str]:
 
     context_parts: list[str] = []
     for c in chunks:
-        context_parts.append(f"File {c.file_path} (Lines {c.start_line}-{c.end_line}):\n{c.code_snippet}")
+        context_parts.append(
+            f"File {c.file_path} (Lines {c.start_line}-{c.end_line}):\n{c.code_snippet}"
+        )
 
     context_str = "\n\n".join(context_parts)
     logger.info("Retrieved %d context chunks for Multi-Agent graph", len(chunks))

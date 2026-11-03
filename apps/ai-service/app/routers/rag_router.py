@@ -53,9 +53,7 @@ async def get_rag_status(workspace_id: str) -> RAGStatusResponse:
 async def query_rag(request: RAGQueryRequest) -> StreamingResponse:
     """Perform RAG codebase retrieval and stream AI generation response."""
     if not request.prompt or not request.prompt.strip():
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Prompt is required"
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Prompt is required")
 
     return StreamingResponse(
         rag_service.query_rag_stream(request),

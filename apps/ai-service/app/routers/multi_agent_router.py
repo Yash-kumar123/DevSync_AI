@@ -73,9 +73,7 @@ async def stream_multi_agent_pipeline(request: MultiAgentRequest) -> AsyncGenera
 async def multi_agent_endpoint(request: MultiAgentRequest) -> StreamingResponse:
     """Stream multi-agent LangGraph workflow execution token by token."""
     if not request.prompt or not request.prompt.strip():
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Prompt is required"
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Prompt is required")
 
     logger.info("Starting Multi-Agent AI pipeline for prompt: %s...", request.prompt[:40])
 
