@@ -32,7 +32,8 @@ export class AdminRepository {
     });
 
     const storageUsageBytes = files.reduce(
-      (acc, f) => acc + (f.content ? Buffer.byteLength(f.content, 'utf8') : 0),
+      (acc: number, f: { content: string | null }) =>
+        acc + (f.content ? Buffer.byteLength(f.content, 'utf8') : 0),
       0,
     );
 
